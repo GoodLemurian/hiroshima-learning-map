@@ -6,6 +6,14 @@ import { createDrawControl } from './drawing/createDrawControl.js'
 import { createDrawingState } from './drawing/drawingState.js'
 import { createDrawingPanel } from './ui/drawingPanel.js'
 import { createMeasurementPanel } from './ui/measurementPanel.js'
+import { loadAdministrativeAreas } from './data/loadAdministrativeAreas.js'
+import {
+  addAdministrativeAreaLayers,
+  bindAdministrativeAreaInteractions,
+  fitAdministrativeAreas,
+} from './map/administrativeAreaLayers.js'
+import { createAdministrativeAreaPanel } from './ui/administrativeAreaPanel.js'
+import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 
 document.querySelector('#app').innerHTML = `
   <header class="app-header">
@@ -53,6 +61,16 @@ document.querySelector('#app').innerHTML = `
         <span>地形を立体にする</span>
       </label>
     </fieldset>
+    <section class="ward-panel" aria-labelledby="ward-panel-title">
+      <h2 id="ward-panel-title">広島市の区</h2>
+      <label class="ward-toggle">
+        <input id="wards-toggle" type="checkbox" checked />
+        <span>広島市の区を表示</span>
+      </label>
+      <div id="administrative-area-info" class="ward-info" aria-live="polite">
+        <p>地図の区をえらんでください</p>
+      </div>
+    </section>
     <p id="map-error" class="error-message" role="alert" hidden>
       地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。
     </p>
@@ -75,6 +93,30 @@ map.once('load', () => {
   createTerrainToggle(map)
 
   const drawingState = createDrawingState()
+  const wardPanel = createAdministrativeAreaPanel()
+  loadAdministrativeAreas()
+    .then(({ featureCollection }) => {
+      try {
+        addAdministrativeAreaLayers(map, featureCollection)
+        const wardInteractions = bindAdministrativeAreaInteractions({
+          map,
+          isDrawingActive: () => drawingState.getState().mode !== 'select',
+          onSelect: (ward) => wardPanel.showSelection(ward),
+        })
+        createAdministrativeAreaToggle((visible) =>
+          wardInteractions.setVisible(visible),
+        )
+        fitAdministrativeAreas(map, featureCollection)
+      } catch (error) {
+        console.error('広島市の行政区レイヤーを追加できませんでした。', error)
+        wardPanel.showError()
+      }
+    })
+    .catch((error) => {
+      console.error('広島市の行政区データを読み込めませんでした。', error)
+      wardPanel.showError()
+    })
+
   const showDrawingMessage = (message, isError = false) => {
     const status = document.querySelector('#drawing-status')
     status.textContent = message

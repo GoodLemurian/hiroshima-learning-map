@@ -78,6 +78,75 @@ h1 {
   z-index: 1;
 }
 
+.ward-panel {
+  position: absolute;
+  inset: auto 12px 36px auto;
+  width: min(260px, calc(100% - 24px));
+  padding: 12px;
+  border: 2px solid #176b55;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+  z-index: 1;
+}
+
+.ward-panel h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.ward-toggle {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ward-toggle input {
+  width: 20px;
+  height: 20px;
+  margin: 0 8px 0 0;
+  accent-color: #176b55;
+}
+
+.ward-toggle:has(input:focus-visible) {
+  border-radius: 7px;
+  outline: 3px solid #f2a900;
+  outline-offset: 2px;
+}
+
+.ward-info {
+  min-height: 72px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f2f8f6;
+  font-size: 1rem;
+}
+
+.ward-info p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ward-info__label,
+.ward-info__code {
+  color: #40534d;
+  font-size: 0.9rem;
+}
+
+.ward-info .ward-info__name {
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.ward-info.is-error {
+  color: #7a1711;
+  background: #fff4f2;
+  font-weight: 700;
+}
+
 .drawing-control--hidden {
   display: none !important;
 }
@@ -357,6 +426,13 @@ h1 {
     right: 12px;
     left: 12px;
     overflow-x: auto;
+  }
+
+  .ward-panel {
+    right: 12px;
+    bottom: 28px;
+    left: 12px;
+    width: auto;
   }
 
   .drawing-tools {
