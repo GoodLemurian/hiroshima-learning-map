@@ -21,6 +21,7 @@ import { createAdministrativeAreaPanel } from './ui/administrativeAreaPanel.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
+import { createWardPanelToggle } from './ui/wardPanelToggle.js'
 import {
   createWardStatisticsChart,
   showWardStatisticsChartError,
@@ -64,6 +65,16 @@ document.querySelector('#app').innerHTML = `
         <p class="measurement-note">※ 長さや広さはおよその値です</p>
       </section>
     </section>
+    <button
+      id="ward-panel-toggle"
+      class="ward-panel-toggle"
+      type="button"
+      aria-controls="ward-panel"
+      aria-expanded="false"
+    >
+      <span aria-hidden="true">▱</span>
+      <span class="ward-panel-toggle__label">区をえらぶ</span>
+    </button>
     <fieldset class="base-map-selector">
       <legend>地図の種類</legend>
       <div id="base-map-selector" class="base-map-options"></div>
@@ -72,7 +83,7 @@ document.querySelector('#app').innerHTML = `
         <span>地形を立体にする</span>
       </label>
     </fieldset>
-    <section class="ward-panel" aria-labelledby="ward-panel-title">
+    <section id="ward-panel" class="ward-panel" aria-labelledby="ward-panel-title" hidden>
       <h2 id="ward-panel-title">広島市の区</h2>
       <label class="ward-toggle">
         <input id="wards-toggle" type="checkbox" checked />
@@ -115,6 +126,7 @@ const map = createHiroshimaMap({
 map.once('load', () => {
   createBaseMapSelector(map)
   createTerrainToggle(map)
+  const wardPanelToggle = createWardPanelToggle()
 
   const drawingState = createDrawingState()
   const wardPanel = createAdministrativeAreaPanel()
@@ -149,6 +161,7 @@ map.once('load', () => {
           onSelect: (ward) => {
             wardPanel.showSelection(ward)
             chart.setSelection(ward?.wardCode || null)
+            if (ward) wardPanelToggle.open()
           },
         })
         createAdministrativeAreaToggle((visible) => {
