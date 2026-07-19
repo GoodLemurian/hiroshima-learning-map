@@ -22,9 +22,9 @@ import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js
 import { createStatisticSelector } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
 import {
-  createWardPopulationChart,
-  showWardPopulationChartError,
-} from './chart/createWardPopulationChart.js'
+  createWardStatisticsChart,
+  showWardStatisticsChartError,
+} from './chart/createWardStatisticsChart.js'
 
 document.querySelector('#app').innerHTML = `
   <header class="app-header">
@@ -88,9 +88,9 @@ document.querySelector('#app').innerHTML = `
       </div>
     </section>
     <section class="chart-panel" aria-labelledby="chart-panel-title">
-      <h2 id="chart-panel-title">区ごとの人口</h2>
-      <p>棒の長さで人口をくらべてみよう</p>
-      <div id="ward-population-chart" class="ward-population-chart" aria-live="polite">
+      <h2 id="chart-panel-title">区ごとの統計グラフ</h2>
+      <p id="chart-panel-hint">棒の長さで区ごとのちがいをくらべてみよう</p>
+      <div id="ward-statistics-chart" class="ward-statistics-chart" aria-live="polite">
         グラフを読みこんでいます…
       </div>
     </section>
@@ -122,7 +122,6 @@ map.once('load', () => {
   const numericColumns = Object.keys(statisticDefinitions)
   Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns })])
     .then(([{ featureCollection, wardCodes }, { records }]) => {
-      createWardPopulationChart(records)
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
@@ -130,6 +129,8 @@ map.once('load', () => {
         }
         addAdministrativeAreaLayers(map, joined.featureCollection)
         let selectedStatistic = DEFAULT_STATISTIC
+        const initialDefinition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
+        const chart = createWardStatisticsChart(records, initialDefinition)
         const updateStatistic = (key) => {
           selectedStatistic = key
           const definition = { ...statisticDefinitions[key], key }
@@ -138,13 +139,17 @@ map.once('load', () => {
           setAdministrativeAreaColors(map, scale.expression)
           legend.update(definition, scale)
           wardPanel.setStatistics(definition, joined.recordByCode)
+          chart.setStatistic(definition)
         }
         createStatisticSelector(statisticDefinitions, selectedStatistic, updateStatistic)
         updateStatistic(selectedStatistic)
         const wardInteractions = bindAdministrativeAreaInteractions({
           map,
           isDrawingActive: () => drawingState.getState().mode !== 'select',
-          onSelect: (ward) => wardPanel.showSelection(ward),
+          onSelect: (ward) => {
+            wardPanel.showSelection(ward)
+            chart.setSelection(ward?.wardCode || null)
+          },
         })
         createAdministrativeAreaToggle((visible) => {
           wardInteractions.setVisible(visible)
@@ -159,7 +164,7 @@ map.once('load', () => {
     .catch((error) => {
       console.error('行政区または統計データを読み込めませんでした。', error)
       wardPanel.showError()
-      showWardPopulationChartError()
+      showWardStatisticsChartError()
     })
 
   const showDrawingMessage = (message, isError = false) => {

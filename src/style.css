@@ -114,20 +114,20 @@ h1 {
   font-size: 0.78rem;
 }
 
-.ward-population-chart {
+.ward-statistics-chart {
   min-height: 230px;
   font-size: 0.85rem;
 }
 
-.ward-population-chart .vega-embed,
-.ward-population-chart svg {
+.ward-statistics-chart .vega-embed,
+.ward-statistics-chart svg {
   display: block;
   width: 100%;
   max-width: 100%;
   height: auto;
 }
 
-.ward-population-chart.is-error {
+.ward-statistics-chart.is-error {
   min-height: auto;
   padding: 10px;
   border-radius: 8px;
@@ -560,7 +560,7 @@ h1 {
     padding: 8px 10px;
   }
 
-  .ward-population-chart {
+  .ward-statistics-chart {
     min-height: 180px;
     max-height: 180px;
     overflow: auto;
