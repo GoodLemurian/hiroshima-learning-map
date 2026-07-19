@@ -116,6 +116,64 @@ h1 {
   outline-offset: 2px;
 }
 
+.statistic-control {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+  font-weight: 800;
+}
+
+.statistic-control select {
+  min-height: 44px;
+  padding: 7px 10px;
+  border: 2px solid #62716c;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+}
+
+.statistic-control select:focus-visible {
+  outline: 3px solid #f2a900;
+  outline-offset: 2px;
+}
+
+.choropleth-legend {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #b8c9c3;
+}
+
+.choropleth-legend[hidden] { display: none; }
+
+.choropleth-legend h3 {
+  margin: 0 0 5px;
+  font-size: 0.9rem;
+}
+
+.choropleth-legend ul {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+}
+
+.choropleth-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-swatch {
+  flex: 0 0 24px;
+  height: 15px;
+  border: 1px solid #40534d;
+}
+
+.legend-swatch--no-data { background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgb(255 255 255 / 65%) 3px, rgb(255 255 255 / 65%) 6px); }
+
 .ward-info {
   min-height: 72px;
   margin-top: 8px;
@@ -138,6 +196,18 @@ h1 {
 
 .ward-info .ward-info__name {
   font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.ward-info__stat-label {
+  margin-top: 7px !important;
+  color: #40534d;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.ward-info .ward-info__stat-value {
+  font-size: 1.15rem;
   font-weight: 800;
 }
 

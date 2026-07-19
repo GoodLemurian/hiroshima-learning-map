@@ -4,8 +4,9 @@ export const WARD_SOURCE_ID = 'hiroshima-wards-source'
 export const WARD_FILL_LAYER_ID = 'hiroshima-wards-fill'
 export const WARD_OUTLINE_LAYER_ID = 'hiroshima-wards-outline'
 export const WARD_HIGHLIGHT_LAYER_ID = 'hiroshima-wards-highlight'
+export const WARD_SELECTION_LAYER_ID = 'hiroshima-wards-selection'
 
-const LAYER_IDS = [WARD_FILL_LAYER_ID, WARD_OUTLINE_LAYER_ID, WARD_HIGHLIGHT_LAYER_ID]
+const LAYER_IDS = [WARD_FILL_LAYER_ID, WARD_OUTLINE_LAYER_ID, WARD_HIGHLIGHT_LAYER_ID, WARD_SELECTION_LAYER_ID]
 const emptyHighlight = () => ['==', ['get', 'N03_007'], '']
 const wardFilter = (wardCode) => ['==', ['get', 'N03_007'], wardCode || '']
 
@@ -19,7 +20,7 @@ export function addAdministrativeAreaLayers(map, data) {
       id: WARD_FILL_LAYER_ID,
       type: 'fill',
       source: WARD_SOURCE_ID,
-      paint: { 'fill-color': '#2c8f72', 'fill-opacity': 0.25 },
+      paint: { 'fill-color': '#b8b8b8', 'fill-opacity': 0.72 },
     })
   }
   if (!map.getLayer(WARD_OUTLINE_LAYER_ID)) {
@@ -39,6 +40,19 @@ export function addAdministrativeAreaLayers(map, data) {
       paint: { 'line-color': '#c74600', 'line-width': 5, 'line-opacity': 1 },
     })
   }
+  if (!map.getLayer(WARD_SELECTION_LAYER_ID)) {
+    map.addLayer({
+      id: WARD_SELECTION_LAYER_ID,
+      type: 'line',
+      source: WARD_SOURCE_ID,
+      filter: emptyHighlight(),
+      paint: { 'line-color': '#5b238a', 'line-width': 4, 'line-opacity': 1 },
+    })
+  }
+}
+
+export function setAdministrativeAreaColors(map, expression) {
+  if (map.getLayer(WARD_FILL_LAYER_ID)) map.setPaintProperty(WARD_FILL_LAYER_ID, 'fill-color', expression)
 }
 
 export function fitAdministrativeAreas(map, featureCollection) {
@@ -69,7 +83,8 @@ export function bindAdministrativeAreaInteractions({ map, isDrawingActive, onSel
 
   const updateHighlight = () => {
     if (!map.getLayer(WARD_HIGHLIGHT_LAYER_ID)) return
-    map.setFilter(WARD_HIGHLIGHT_LAYER_ID, wardFilter(hoveredWardCode || selectedWard?.wardCode))
+    map.setFilter(WARD_HIGHLIGHT_LAYER_ID, wardFilter(hoveredWardCode))
+    map.setFilter(WARD_SELECTION_LAYER_ID, wardFilter(selectedWard?.wardCode))
   }
   const readWard = (feature) => {
     const wardName = feature?.properties?.N03_005

@@ -7,13 +7,20 @@ import { createDrawingState } from './drawing/drawingState.js'
 import { createDrawingPanel } from './ui/drawingPanel.js'
 import { createMeasurementPanel } from './ui/measurementPanel.js'
 import { loadAdministrativeAreas } from './data/loadAdministrativeAreas.js'
+import { loadWardStatistics } from './data/loadWardStatistics.js'
+import { joinWardStatistics } from './data/joinWardStatistics.js'
+import { DEFAULT_STATISTIC, statisticDefinitions } from './data/statisticDefinitions.js'
+import { createChoroplethScale } from './analysis/createChoroplethScale.js'
 import {
   addAdministrativeAreaLayers,
   bindAdministrativeAreaInteractions,
   fitAdministrativeAreas,
+  setAdministrativeAreaColors,
 } from './map/administrativeAreaLayers.js'
 import { createAdministrativeAreaPanel } from './ui/administrativeAreaPanel.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
+import { createStatisticSelector } from './ui/statisticSelector.js'
+import { createChoroplethLegend } from './ui/choroplethLegend.js'
 
 document.querySelector('#app').innerHTML = `
   <header class="app-header">
@@ -67,6 +74,11 @@ document.querySelector('#app').innerHTML = `
         <input id="wards-toggle" type="checkbox" checked />
         <span>広島市の区を表示</span>
       </label>
+      <label class="statistic-control" for="statistic-selector">
+        <span>色分けするもの</span>
+        <select id="statistic-selector"></select>
+      </label>
+      <section id="choropleth-legend" class="choropleth-legend" aria-label="色分けの説明"></section>
       <div id="administrative-area-info" class="ward-info" aria-live="polite">
         <p>地図の区をえらんでください</p>
       </div>
@@ -78,6 +90,7 @@ document.querySelector('#app').innerHTML = `
   <footer class="attribution">
     背景地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noreferrer">国土地理院</a>
     ／ 標高：<a href="https://tiles.gsj.jp/tiles/elev/tiles.html" target="_blank" rel="noreferrer">産総研地質調査総合センター</a>
+    ／ 統計：<a href="https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html" target="_blank" rel="noreferrer">広島市 年齢別人口（区役所別）</a>（2026年5月31日、CC BY 2.1 JP）
   </footer>
 `
 
@@ -94,26 +107,45 @@ map.once('load', () => {
 
   const drawingState = createDrawingState()
   const wardPanel = createAdministrativeAreaPanel()
-  loadAdministrativeAreas()
-    .then(({ featureCollection }) => {
+  const legend = createChoroplethLegend()
+  const numericColumns = Object.keys(statisticDefinitions)
+  Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns })])
+    .then(([{ featureCollection, wardCodes }, { records }]) => {
       try {
-        addAdministrativeAreaLayers(map, featureCollection)
+        const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
+        if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
+          console.warn('一部の区は統計データなしとして表示します。')
+        }
+        addAdministrativeAreaLayers(map, joined.featureCollection)
+        let selectedStatistic = DEFAULT_STATISTIC
+        const updateStatistic = (key) => {
+          selectedStatistic = key
+          const definition = { ...statisticDefinitions[key], key }
+          const values = records.map((record) => record[key])
+          const scale = createChoroplethScale(values, definition.property)
+          setAdministrativeAreaColors(map, scale.expression)
+          legend.update(definition, scale)
+          wardPanel.setStatistics(definition, joined.recordByCode)
+        }
+        createStatisticSelector(statisticDefinitions, selectedStatistic, updateStatistic)
+        updateStatistic(selectedStatistic)
         const wardInteractions = bindAdministrativeAreaInteractions({
           map,
           isDrawingActive: () => drawingState.getState().mode !== 'select',
           onSelect: (ward) => wardPanel.showSelection(ward),
         })
-        createAdministrativeAreaToggle((visible) =>
-          wardInteractions.setVisible(visible),
-        )
-        fitAdministrativeAreas(map, featureCollection)
+        createAdministrativeAreaToggle((visible) => {
+          wardInteractions.setVisible(visible)
+          legend.setVisible(visible)
+        })
+        fitAdministrativeAreas(map, joined.featureCollection)
       } catch (error) {
         console.error('広島市の行政区レイヤーを追加できませんでした。', error)
         wardPanel.showError()
       }
     })
     .catch((error) => {
-      console.error('広島市の行政区データを読み込めませんでした。', error)
+      console.error('行政区または統計データを読み込めませんでした。', error)
       wardPanel.showError()
     })
 
