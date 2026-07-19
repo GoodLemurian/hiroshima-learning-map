@@ -65,6 +65,10 @@ body,
   border-top: 1px solid #b8c9c3;
 }
 
+#elevation-colors-settings[hidden] {
+  display: none;
+}
+
 .elevation-color-row {
   display: flex;
   align-items: center;

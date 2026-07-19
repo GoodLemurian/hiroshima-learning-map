@@ -34,6 +34,7 @@ export function createTerrainToggle(map) {
 
 export function createElevationColorEditor(map) {
   const enabled = document.querySelector('#elevation-colors-toggle')
+  const settings = document.querySelector('#elevation-colors-settings')
   const rows = document.querySelector('#elevation-color-rows')
   const opacity = document.querySelector('#elevation-colors-opacity')
   let stops = DEFAULT_ELEVATION_COLORS.map((stop) => ({ ...stop }))
@@ -59,7 +60,11 @@ export function createElevationColorEditor(map) {
     stops[index][field] = field === 'elevation' ? Number(event.target.value) : event.target.value
     update()
   })
-  enabled.addEventListener('change', update)
+  enabled.addEventListener('change', () => {
+    settings.hidden = !enabled.checked
+    enabled.setAttribute('aria-expanded', String(enabled.checked))
+    update()
+  })
   opacity.addEventListener('input', () => setElevationColors(map, {
     enabled: enabled.checked,
     opacity: Number(opacity.value) / 100,

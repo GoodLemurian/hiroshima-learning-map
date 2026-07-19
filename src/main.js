@@ -102,14 +102,21 @@ document.querySelector('#app').innerHTML = `
       </label>
       <div class="elevation-colors-editor">
         <label class="terrain-option">
-          <input id="elevation-colors-toggle" type="checkbox" />
+          <input
+            id="elevation-colors-toggle"
+            type="checkbox"
+            aria-controls="elevation-colors-settings"
+            aria-expanded="false"
+          />
           <span>自分で作る色別標高図</span>
         </label>
-        <div id="elevation-color-rows"></div>
-        <label class="elevation-opacity">色の濃さ
-          <input id="elevation-colors-opacity" type="range" min="10" max="100" value="72" />
-        </label>
-        <button id="elevation-colors-reset" type="button">初期設定に戻す</button>
+        <div id="elevation-colors-settings" hidden>
+          <div id="elevation-color-rows"></div>
+          <label class="elevation-opacity">色の濃さ
+            <input id="elevation-colors-opacity" type="range" min="10" max="100" value="72" />
+          </label>
+          <button id="elevation-colors-reset" type="button">初期設定に戻す</button>
+        </div>
       </div>
     </fieldset>
     <section id="ward-panel" class="ward-panel" aria-labelledby="ward-panel-title" hidden>
