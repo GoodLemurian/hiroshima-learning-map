@@ -1,6 +1,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './style.css'
 import { createHiroshimaMap } from './map.js'
+import { createBaseMapSelector } from './ui.js'
 
 document.querySelector('#app').innerHTML = `
   <header class="app-header">
@@ -12,6 +13,10 @@ document.querySelector('#app').innerHTML = `
   </header>
   <main class="map-area">
     <div id="map" aria-label="広島市の地図"></div>
+    <fieldset class="base-map-selector">
+      <legend>地図の種類</legend>
+      <div id="base-map-selector" class="base-map-options"></div>
+    </fieldset>
     <p id="map-error" class="error-message" role="alert" hidden>
       地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。
     </p>
@@ -21,9 +26,11 @@ document.querySelector('#app').innerHTML = `
   </footer>
 `
 
-createHiroshimaMap({
+const map = createHiroshimaMap({
   container: 'map',
   onError: () => {
     document.querySelector('#map-error').hidden = false
   },
 })
+
+map.once('load', () => createBaseMapSelector(map))

@@ -64,6 +64,57 @@ h1 {
   height: 100%;
 }
 
+.base-map-selector {
+  position: absolute;
+  inset: 12px auto auto 12px;
+  min-width: 132px;
+  margin: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 10px;
+  color: #213547;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 25%);
+  z-index: 1;
+}
+
+.base-map-selector legend {
+  padding: 0 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.base-map-options {
+  display: grid;
+  gap: 4px;
+}
+
+.base-map-option {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.base-map-option:has(input:checked) {
+  color: #fff;
+  background: #176b55;
+}
+
+.base-map-option:has(input:focus-visible) {
+  outline: 3px solid #f2a900;
+  outline-offset: 2px;
+}
+
+.base-map-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0 8px 0 0;
+  accent-color: #176b55;
+}
+
 .error-message {
   position: absolute;
   inset: 16px 50% auto auto;
