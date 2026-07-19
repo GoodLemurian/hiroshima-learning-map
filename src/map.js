@@ -29,21 +29,52 @@ export const BASE_MAPS = [
       'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg',
     ],
   },
+  {
+    id: 'photo-1960s',
+    label: '1960年代の写真',
+    tiles: [
+      'https://cyberjapandata.gsi.go.jp/xyz/ort_old10/{z}/{x}/{y}.png',
+    ],
+  },
+  {
+    id: 'photo-1970s',
+    label: '1970年代の写真',
+    tiles: [
+      'https://cyberjapandata.gsi.go.jp/xyz/gazo1/{z}/{x}/{y}.jpg',
+    ],
+  },
+  {
+    id: 'photo-1980s',
+    label: '1980年代の写真',
+    tiles: [
+      'https://cyberjapandata.gsi.go.jp/xyz/gazo4/{z}/{x}/{y}.jpg',
+    ],
+  },
+  {
+    id: 'photo-2000s',
+    label: '2000年代の写真',
+    tiles: [
+      'https://cyberjapandata.gsi.go.jp/xyz/nendophoto2008/{z}/{x}/{y}.png',
+      'https://cyberjapandata.gsi.go.jp/xyz/nendophoto2009/{z}/{x}/{y}.png',
+    ],
+  },
 ]
+
+const baseMapLayerId = (id, index) => `gsi-${id}-${index}-layer`
 
 const baseMapStyle = {
   version: 8,
   sources: Object.fromEntries(
     [
-      ...BASE_MAPS.map(({ id, tiles }) => [
-        `gsi-${id}`,
+      ...BASE_MAPS.flatMap(({ id, tiles }) => tiles.map((tile, index) => [
+        `gsi-${id}-${index}`,
         {
           type: 'raster',
-          tiles,
+          tiles: [tile],
           tileSize: 256,
           attribution: '地理院タイル',
         },
-      ]),
+      ])),
       [
         TERRAIN_SOURCE_ID,
         {
@@ -70,14 +101,14 @@ const baseMapStyle = {
     ],
   ),
   layers: [
-    ...BASE_MAPS.map(({ id }, index) => ({
-    id: `gsi-${id}-layer`,
-    type: 'raster',
-    source: `gsi-${id}`,
-    layout: {
-      visibility: index === 0 ? 'visible' : 'none',
-    },
-    })),
+    ...BASE_MAPS.flatMap(({ id, tiles }, mapIndex) => tiles.map((_, tileIndex) => ({
+      id: baseMapLayerId(id, tileIndex),
+      type: 'raster',
+      source: `gsi-${id}-${tileIndex}`,
+      layout: {
+        visibility: mapIndex === 0 ? 'visible' : 'none',
+      },
+    }))),
     {
       id: ELEVATION_COLOR_LAYER_ID,
       type: 'raster',
@@ -115,12 +146,14 @@ export function setBaseMap(map, selectedId) {
     return
   }
 
-  BASE_MAPS.forEach(({ id }) => {
-    map.setLayoutProperty(
-      `gsi-${id}-layer`,
-      'visibility',
-      id === selectedId ? 'visible' : 'none',
-    )
+  BASE_MAPS.forEach(({ id, tiles }) => {
+    tiles.forEach((_, index) => {
+      map.setLayoutProperty(
+        baseMapLayerId(id, index),
+        'visibility',
+        id === selectedId ? 'visible' : 'none',
+      )
+    })
   })
 }
 
