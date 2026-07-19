@@ -1,7 +1,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './style.css'
 import { createHiroshimaMap } from './map.js'
-import { createBaseMapSelector } from './ui.js'
+import { createBaseMapSelector, createTerrainToggle } from './ui.js'
 
 document.querySelector('#app').innerHTML = `
   <header class="app-header">
@@ -16,6 +16,10 @@ document.querySelector('#app').innerHTML = `
     <fieldset class="base-map-selector">
       <legend>地図の種類</legend>
       <div id="base-map-selector" class="base-map-options"></div>
+      <label class="terrain-option">
+        <input id="terrain-toggle" type="checkbox" />
+        <span>地形を立体にする</span>
+      </label>
     </fieldset>
     <p id="map-error" class="error-message" role="alert" hidden>
       地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。
@@ -23,6 +27,7 @@ document.querySelector('#app').innerHTML = `
   </main>
   <footer class="attribution">
     背景地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noreferrer">国土地理院</a>
+    ／ 標高：<a href="https://tiles.gsj.jp/tiles/elev/tiles.html" target="_blank" rel="noreferrer">産総研地質調査総合センター</a>
   </footer>
 `
 
@@ -33,4 +38,7 @@ const map = createHiroshimaMap({
   },
 })
 
-map.once('load', () => createBaseMapSelector(map))
+map.once('load', () => {
+  createBaseMapSelector(map)
+  createTerrainToggle(map)
+})

@@ -115,6 +115,30 @@ h1 {
   accent-color: #176b55;
 }
 
+.terrain-option {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-top: 1px solid #c8d2ce;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.terrain-option input {
+  width: 20px;
+  height: 20px;
+  margin: 0 8px 0 0;
+  accent-color: #176b55;
+}
+
+.terrain-option:has(input:focus-visible) {
+  border-radius: 7px;
+  outline: 3px solid #f2a900;
+  outline-offset: 2px;
+}
+
 .error-message {
   position: absolute;
   inset: 16px 50% auto auto;

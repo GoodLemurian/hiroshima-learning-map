@@ -1,6 +1,7 @@
 import maplibregl from 'maplibre-gl'
 
 const HIROSHIMA_CENTER = [132.4553, 34.3853]
+const TERRAIN_SOURCE_ID = 'gsj-elevation'
 
 export const BASE_MAPS = [
   {
@@ -25,15 +26,34 @@ export const BASE_MAPS = [
 const baseMapStyle = {
   version: 8,
   sources: Object.fromEntries(
-    BASE_MAPS.map(({ id, tiles }) => [
-      `gsi-${id}`,
-      {
-        type: 'raster',
-        tiles,
-        tileSize: 256,
-        attribution: '地理院タイル',
-      },
-    ]),
+    [
+      ...BASE_MAPS.map(({ id, tiles }) => [
+        `gsi-${id}`,
+        {
+          type: 'raster',
+          tiles,
+          tileSize: 256,
+          attribution: '地理院タイル',
+        },
+      ]),
+      [
+        TERRAIN_SOURCE_ID,
+        {
+          type: 'raster-dem',
+          tiles: [
+            'https://tiles.gsj.jp/tiles/elev2/mixed/{z}/{x}/{y}.webp',
+          ],
+          tileSize: 512,
+          maxzoom: 17,
+          encoding: 'custom',
+          redFactor: 655.36,
+          greenFactor: 2.56,
+          blueFactor: 0.01,
+          baseShift: 0,
+          attribution: '産総研地質調査総合センター シームレス標高タイル',
+        },
+      ],
+    ],
   ),
   layers: BASE_MAPS.map(({ id }, index) => ({
     id: `gsi-${id}-layer`,
@@ -43,6 +63,14 @@ const baseMapStyle = {
       visibility: index === 0 ? 'visible' : 'none',
     },
   })),
+}
+
+export function setTerrainEnabled(map, enabled) {
+  map.setTerrain(enabled ? { source: TERRAIN_SOURCE_ID, exaggeration: 1.3 } : null)
+  map.easeTo({
+    pitch: enabled ? 60 : 0,
+    duration: 800,
+  })
 }
 
 export function setBaseMap(map, selectedId) {
@@ -69,7 +97,7 @@ export function createHiroshimaMap({ container, onError }) {
   })
 
   map.addControl(
-    new maplibregl.NavigationControl({ showCompass: false }),
+    new maplibregl.NavigationControl({ showCompass: true }),
     'top-right',
   )
   map.addControl(

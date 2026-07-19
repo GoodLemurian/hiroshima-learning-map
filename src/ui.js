@@ -1,4 +1,4 @@
-import { BASE_MAPS, setBaseMap } from './map.js'
+import { BASE_MAPS, setBaseMap, setTerrainEnabled } from './map.js'
 
 export function createBaseMapSelector(map) {
   const options = BASE_MAPS.map(
@@ -21,5 +21,12 @@ export function createBaseMapSelector(map) {
     if (event.target.matches('input[name="base-map"]')) {
       setBaseMap(map, event.target.value)
     }
+  })
+}
+
+export function createTerrainToggle(map) {
+  const toggle = document.querySelector('#terrain-toggle')
+  toggle.addEventListener('change', () => {
+    setTerrainEnabled(map, toggle.checked)
   })
 }
