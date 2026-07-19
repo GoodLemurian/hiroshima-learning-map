@@ -58,6 +58,72 @@ export const BASE_MAPS = [
       'https://cyberjapandata.gsi.go.jp/xyz/nendophoto2009/{z}/{x}/{y}.png',
     ],
   },
+  {
+    id: 'map-meiji',
+    label: '明治時代の地図',
+    tiles: [
+      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/2man/{z}/{x}/{y}.png',
+    ],
+    attribution: '今昔マップ on the web',
+    scheme: 'tms',
+    minzoom: 8,
+    maxzoom: 16,
+  },
+  {
+    id: 'map-early-showa',
+    label: '昭和初期の地図',
+    tiles: [
+      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/00/{z}/{x}/{y}.png',
+    ],
+    attribution: '今昔マップ on the web',
+    scheme: 'tms',
+    minzoom: 8,
+    maxzoom: 16,
+  },
+  {
+    id: 'map-1950s',
+    label: '1950年代の地図',
+    tiles: [
+      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/01/{z}/{x}/{y}.png',
+    ],
+    attribution: '今昔マップ on the web',
+    scheme: 'tms',
+    minzoom: 8,
+    maxzoom: 16,
+  },
+  {
+    id: 'map-1960s',
+    label: '1960年代の地図',
+    tiles: [
+      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/02/{z}/{x}/{y}.png',
+    ],
+    attribution: '今昔マップ on the web',
+    scheme: 'tms',
+    minzoom: 8,
+    maxzoom: 16,
+  },
+  {
+    id: 'map-1980s',
+    label: '1980年代の地図',
+    tiles: [
+      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/03/{z}/{x}/{y}.png',
+    ],
+    attribution: '今昔マップ on the web',
+    scheme: 'tms',
+    minzoom: 8,
+    maxzoom: 16,
+  },
+  {
+    id: 'map-1990s',
+    label: '1990年代の地図',
+    tiles: [
+      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/04/{z}/{x}/{y}.png',
+    ],
+    attribution: '今昔マップ on the web',
+    scheme: 'tms',
+    minzoom: 8,
+    maxzoom: 16,
+  },
 ]
 
 const baseMapLayerId = (id, index) => `gsi-${id}-${index}-layer`
@@ -66,13 +132,23 @@ const baseMapStyle = {
   version: 8,
   sources: Object.fromEntries(
     [
-      ...BASE_MAPS.flatMap(({ id, tiles }) => tiles.map((tile, index) => [
+      ...BASE_MAPS.flatMap(({
+        id,
+        tiles,
+        attribution = '地理院タイル',
+        scheme = 'xyz',
+        minzoom = 0,
+        maxzoom = 22,
+      }) => tiles.map((tile, index) => [
         `gsi-${id}-${index}`,
         {
           type: 'raster',
           tiles: [tile],
           tileSize: 256,
-          attribution: '地理院タイル',
+          attribution,
+          scheme,
+          minzoom,
+          maxzoom,
         },
       ])),
       [
