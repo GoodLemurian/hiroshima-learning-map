@@ -66,7 +66,7 @@ h1 {
 
 .base-map-selector {
   position: absolute;
-  inset: 70px auto auto 12px;
+  inset: 70px 190px auto auto;
   min-width: 132px;
   margin: 0;
   padding: 8px;
@@ -76,6 +76,10 @@ h1 {
   background: rgb(255 255 255 / 94%);
   box-shadow: 0 1px 6px rgb(0 0 0 / 25%);
   z-index: 1;
+}
+
+.base-map-selector[hidden] {
+  display: none;
 }
 
 .ward-panel-toggle {
@@ -306,9 +310,16 @@ h1 {
   display: none !important;
 }
 
-.drawing-panel-toggle {
+.map-action-buttons {
   position: absolute;
   inset: 12px 52px auto auto;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+.base-map-panel-toggle,
+.drawing-panel-toggle {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -323,20 +334,23 @@ h1 {
   font-weight: 800;
   cursor: pointer;
   touch-action: manipulation;
-  z-index: 2;
 }
 
+.base-map-panel-toggle:hover,
+.base-map-panel-toggle.is-active,
 .drawing-panel-toggle:hover,
 .drawing-panel-toggle.is-active {
   color: #fff;
   background: #176b55;
 }
 
+.base-map-panel-toggle:focus-visible,
 .drawing-panel-toggle:focus-visible {
   outline: 4px solid #f2a900;
   outline-offset: 2px;
 }
 
+.base-map-panel-toggle > span[aria-hidden],
 .drawing-panel-toggle > span[aria-hidden] {
   font-size: 1.3rem;
 }
@@ -575,6 +589,25 @@ h1 {
   .app-header__hint {
     font-size: 0.8rem;
     white-space: normal;
+  }
+
+  .map-action-buttons {
+    gap: 5px;
+  }
+
+  .base-map-panel-toggle,
+  .drawing-panel-toggle {
+    padding-inline: 9px;
+    font-size: 0.78rem;
+  }
+
+  .base-map-panel-toggle > span[aria-hidden],
+  .drawing-panel-toggle > span[aria-hidden] {
+    display: none;
+  }
+
+  .base-map-selector {
+    right: 140px;
   }
 
   .drawing-panel {

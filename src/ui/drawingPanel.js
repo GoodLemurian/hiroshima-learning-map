@@ -4,6 +4,7 @@ const MODE_HELP = {
   polygon: '場所をかこみ、最初の場所をもう一度おそう。',
   select: 'かいたものをえらぶと、動かしたり形を直したりできます。',
 }
+const PANEL_OPEN_EVENT = 'map-panel-open'
 
 export function createDrawingPanel({ state, onMode, onDelete, onClear }) {
   const panel = document.querySelector('#drawing-panel')
@@ -12,12 +13,24 @@ export function createDrawingPanel({ state, onMode, onDelete, onClear }) {
   const status = document.querySelector('#drawing-status')
   const count = document.querySelector('#drawing-count')
 
-  toggle.addEventListener('click', () => {
-    const willOpen = panel.hidden
+  const setOpen = (willOpen) => {
     panel.hidden = !willOpen
     toggle.setAttribute('aria-expanded', String(willOpen))
     toggle.classList.toggle('is-active', willOpen)
     toggleLabel.textContent = willOpen ? 'とじる' : '地図にかく'
+  }
+
+  toggle.addEventListener('click', () => {
+    const willOpen = panel.hidden
+    setOpen(willOpen)
+    if (willOpen) {
+      document.dispatchEvent(new CustomEvent(PANEL_OPEN_EVENT, {
+        detail: { panelId: panel.id },
+      }))
+    }
+  })
+  document.addEventListener(PANEL_OPEN_EVENT, (event) => {
+    if (event.detail.panelId !== panel.id) setOpen(false)
   })
 
   panel.addEventListener('click', (event) => {

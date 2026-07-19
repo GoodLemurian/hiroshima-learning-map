@@ -22,6 +22,7 @@ import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js
 import { createStatisticSelector } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
 import { createWardPanelToggle } from './ui/wardPanelToggle.js'
+import { createBaseMapPanelToggle } from './ui/baseMapPanelToggle.js'
 import {
   createWardStatisticsChart,
   showWardStatisticsChartError,
@@ -37,16 +38,28 @@ document.querySelector('#app').innerHTML = `
   </header>
   <main class="map-area">
     <div id="map" aria-label="広島市の地図"></div>
-    <button
-      id="drawing-panel-toggle"
-      class="drawing-panel-toggle"
-      type="button"
-      aria-controls="drawing-panel"
-      aria-expanded="false"
-    >
-      <span aria-hidden="true">✎</span>
-      <span class="drawing-panel-toggle__label">地図にかく</span>
-    </button>
+    <div class="map-action-buttons">
+      <button
+        id="base-map-panel-toggle"
+        class="base-map-panel-toggle"
+        type="button"
+        aria-controls="base-map-panel"
+        aria-expanded="false"
+      >
+        <span aria-hidden="true">▧</span>
+        <span class="base-map-panel-toggle__label">地図の種類</span>
+      </button>
+      <button
+        id="drawing-panel-toggle"
+        class="drawing-panel-toggle"
+        type="button"
+        aria-controls="drawing-panel"
+        aria-expanded="false"
+      >
+        <span aria-hidden="true">✎</span>
+        <span class="drawing-panel-toggle__label">地図にかく</span>
+      </button>
+    </div>
     <section id="drawing-panel" class="drawing-panel" aria-label="地図にかく道具" hidden>
       <h2>地図にかいてみよう</h2>
       <div class="drawing-tools">
@@ -75,7 +88,7 @@ document.querySelector('#app').innerHTML = `
       <span aria-hidden="true">▱</span>
       <span class="ward-panel-toggle__label">区をえらぶ</span>
     </button>
-    <fieldset class="base-map-selector">
+    <fieldset id="base-map-panel" class="base-map-selector" hidden>
       <legend>地図の種類</legend>
       <div id="base-map-selector" class="base-map-options"></div>
       <label class="terrain-option">
@@ -126,6 +139,7 @@ const map = createHiroshimaMap({
 map.once('load', () => {
   createBaseMapSelector(map)
   createTerrainToggle(map)
+  createBaseMapPanelToggle()
   const wardPanelToggle = createWardPanelToggle()
 
   const drawingState = createDrawingState()
