@@ -198,13 +198,15 @@ h1 {
 .ward-panel {
   position: absolute;
   inset: 70px auto auto 12px;
-  width: min(260px, calc(100% - 24px));
+  width: min(312px, calc(100% - 24px));
   padding: 12px;
   border: 2px solid #176b55;
   border-radius: 12px;
   background: rgb(255 255 255 / 96%);
   box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
   z-index: 2;
+  max-height: calc(100% - 82px);
+  overflow-y: auto;
 }
 
 .ward-panel[hidden] {
@@ -212,17 +214,34 @@ h1 {
 }
 
 .chart-panel {
-  position: absolute;
-  inset: auto 180px 36px auto;
-  width: min(430px, calc(100% - 360px));
-  min-width: 320px;
-  padding: 12px 14px;
-  border: 2px solid #176b55;
-  border-radius: 12px;
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
-  z-index: 1;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #b8c9c3;
 }
+
+.chart-panel[hidden] { display: none; }
+
+.chart-toggle {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border: 2px solid #176b55;
+  border-radius: 8px;
+  color: #174438;
+  background: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.chart-toggle:hover { background: #e7f4ef; }
+
+.chart-toggle:focus-visible {
+  outline: 3px solid #f2a900;
+  outline-offset: 2px;
+}
+
+.chart-toggle[hidden] { display: none; }
 
 .chart-panel h2 {
   margin: 0;
@@ -238,6 +257,7 @@ h1 {
 .ward-statistics-chart {
   min-height: 230px;
   font-size: 0.85rem;
+  overflow-x: auto;
 }
 
 .ward-statistics-chart .vega-embed,
@@ -256,6 +276,25 @@ h1 {
   background: #fff4f2;
   font-weight: 700;
 }
+
+#vg-tooltip-element.vg-tooltip {
+  font-size: 80%;
+}
+
+.feature-properties {
+  min-width: 150px;
+  font-size: 0.95rem;
+}
+
+.feature-properties dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 5px 0 0;
+}
+
+.feature-properties dt { font-weight: 700; }
+.feature-properties dd { margin: 0; }
 
 .ward-panel h2 {
   margin: 0 0 8px;
@@ -700,15 +739,6 @@ h1 {
     bottom: auto;
     left: 12px;
     width: auto;
-  }
-
-  .chart-panel {
-    right: 12px;
-    bottom: 120px;
-    left: 12px;
-    width: auto;
-    min-width: 0;
-    padding: 8px 10px;
   }
 
   .ward-statistics-chart {

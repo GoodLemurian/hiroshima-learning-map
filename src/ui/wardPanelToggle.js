@@ -7,7 +7,7 @@ export function createWardPanelToggle() {
     panel.hidden = !open
     toggle.setAttribute('aria-expanded', String(open))
     toggle.classList.toggle('is-active', open)
-    label.textContent = open ? 'とじる' : '区をえらぶ'
+    label.textContent = open ? 'とじる' : 'GeoJSONをえらぶ'
   }
 
   toggle.addEventListener('click', () => setOpen(panel.hidden))

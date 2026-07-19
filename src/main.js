@@ -16,13 +16,16 @@ import {
   bindAdministrativeAreaInteractions,
   fitAdministrativeAreas,
   setAdministrativeAreaColors,
+  WARD_FILL_LAYER_ID,
 } from './map/administrativeAreaLayers.js'
-import { createAdministrativeAreaPanel } from './ui/administrativeAreaPanel.js'
+import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
+import { bindFeaturePropertyPopup } from './map/featurePropertyPopup.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
 import { createWardPanelToggle } from './ui/wardPanelToggle.js'
 import { createBaseMapPanelToggle } from './ui/baseMapPanelToggle.js'
+import { createChartToggle } from './ui/chartToggle.js'
 import {
   createWardStatisticsChart,
   showWardStatisticsChartError,
@@ -86,7 +89,7 @@ document.querySelector('#app').innerHTML = `
       aria-expanded="false"
     >
       <span aria-hidden="true">▱</span>
-      <span class="ward-panel-toggle__label">区をえらぶ</span>
+      <span class="ward-panel-toggle__label">GeoJSONをえらぶ</span>
     </button>
     <fieldset id="base-map-panel" class="base-map-selector" hidden>
       <legend>地図の種類</legend>
@@ -108,26 +111,30 @@ document.querySelector('#app').innerHTML = `
       </div>
     </fieldset>
     <section id="ward-panel" class="ward-panel" aria-labelledby="ward-panel-title" hidden>
-      <h2 id="ward-panel-title">広島市の区</h2>
+      <h2 id="ward-panel-title">GeoJSONをえらぶ</h2>
       <label class="ward-toggle">
-        <input id="wards-toggle" type="checkbox" checked />
+        <input name="geojson-layer" value="wards" type="radio" checked />
         <span>広島市の区を表示</span>
+      </label>
+      <label class="ward-toggle">
+        <input name="geojson-layer" value="school-districts" type="radio" />
+        <span>小学校区を表示</span>
       </label>
       <label class="statistic-control" for="statistic-selector">
         <span>色分けするもの</span>
         <select id="statistic-selector"></select>
       </label>
       <section id="choropleth-legend" class="choropleth-legend" aria-label="色分けの説明"></section>
-      <div id="administrative-area-info" class="ward-info" aria-live="polite">
-        <p>地図の区をえらんでください</p>
-      </div>
-    </section>
-    <section class="chart-panel" aria-labelledby="chart-panel-title">
-      <h2 id="chart-panel-title">区ごとの統計グラフ</h2>
-      <p id="chart-panel-hint">棒の長さで区ごとのちがいをくらべてみよう</p>
-      <div id="ward-statistics-chart" class="ward-statistics-chart" aria-live="polite">
-        グラフを読みこんでいます…
-      </div>
+      <button id="chart-toggle" class="chart-toggle" type="button" aria-controls="chart-panel" aria-expanded="false">
+        グラフを表示する
+      </button>
+      <section id="chart-panel" class="chart-panel" aria-labelledby="chart-panel-title" hidden>
+        <h2 id="chart-panel-title">区ごとの統計グラフ</h2>
+        <p id="chart-panel-hint">棒の長さで区ごとのちがいをくらべてみよう</p>
+        <div id="ward-statistics-chart" class="ward-statistics-chart" aria-live="polite">
+          グラフを読みこんでいます…
+        </div>
+      </section>
     </section>
     <p id="map-error" class="error-message" role="alert" hidden>
       地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。
@@ -153,9 +160,9 @@ map.once('load', () => {
   createElevationColorEditor(map)
   createBaseMapPanelToggle()
   const wardPanelToggle = createWardPanelToggle()
+  const chartToggle = createChartToggle()
 
   const drawingState = createDrawingState()
-  const wardPanel = createAdministrativeAreaPanel()
   const legend = createChoroplethLegend()
   const numericColumns = Object.keys(statisticDefinitions)
   Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns })])
@@ -166,6 +173,7 @@ map.once('load', () => {
           console.warn('一部の区は統計データなしとして表示します。')
         }
         addAdministrativeAreaLayers(map, joined.featureCollection)
+        addSchoolDistrictLayers(map)
         let selectedStatistic = DEFAULT_STATISTIC
         const initialDefinition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
         const chart = createWardStatisticsChart(records, initialDefinition)
@@ -176,7 +184,6 @@ map.once('load', () => {
           const scale = createChoroplethScale(values, definition.property)
           setAdministrativeAreaColors(map, scale.expression)
           legend.update(definition, scale)
-          wardPanel.setStatistics(definition, joined.recordByCode)
           chart.setStatistic(definition)
         }
         createStatisticSelector(statisticDefinitions, selectedStatistic, updateStatistic)
@@ -185,24 +192,63 @@ map.once('load', () => {
           map,
           isDrawingActive: () => drawingState.getState().mode !== 'select',
           onSelect: (ward) => {
-            wardPanel.showSelection(ward)
             chart.setSelection(ward?.wardCode || null)
             if (ward) wardPanelToggle.open()
           },
         })
-        createAdministrativeAreaToggle((visible) => {
-          wardInteractions.setVisible(visible)
-          legend.setVisible(visible)
+        const formatStatistic = (record, definition) => {
+          const value = record?.[definition.key]
+          return typeof value === 'number'
+            ? `${new Intl.NumberFormat('ja-JP', { maximumFractionDigits: definition.maximumFractionDigits }).format(value)} ${definition.unit}`
+            : 'データなし'
+        }
+        bindFeaturePropertyPopup({
+          map,
+          layerId: WARD_FILL_LAYER_ID,
+          isEnabled: () => drawingState.getState().mode === 'select',
+          describeFeature: (feature) => {
+            const code = feature?.properties?.N03_007
+            const definition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
+            if (!code) return null
+            return {
+              title: feature.properties.N03_005 || '行政区',
+              properties: [
+                { label: '都道府県', value: feature.properties.N03_001 || '—' },
+                { label: '市', value: feature.properties.N03_004 || '—' },
+                { label: '区', value: feature.properties.N03_005 || '—' },
+                { label: '地域コード', value: code },
+                { label: definition.label, value: formatStatistic(joined.recordByCode.get(code), definition) },
+              ],
+            }
+          },
+        })
+        bindFeaturePropertyPopup({
+          map,
+          layerId: SCHOOL_DISTRICT_FILL_LAYER_ID,
+          isEnabled: () => drawingState.getState().mode === 'select',
+          describeFeature: (feature) => {
+            const properties = Object.entries(feature?.properties || {})
+              .filter(([, value]) => value !== null && value !== '')
+              .map(([label, value]) => ({ label, value: String(value) }))
+            return properties.length ? { title: '小学校区の属性', properties } : null
+          },
+        })
+        createAdministrativeAreaToggle((selectedLayer) => {
+          const wardsVisible = selectedLayer === 'wards'
+          wardInteractions.setVisible(wardsVisible)
+          legend.setVisible(wardsVisible)
+          setSchoolDistrictVisibility(map, !wardsVisible)
+          document.querySelector('.statistic-control').hidden = !wardsVisible
+          chartToggle.setVisible(wardsVisible)
         })
         fitAdministrativeAreas(map, joined.featureCollection)
       } catch (error) {
         console.error('広島市の行政区レイヤーを追加できませんでした。', error)
-        wardPanel.showError()
+        showWardStatisticsChartError()
       }
     })
     .catch((error) => {
       console.error('行政区または統計データを読み込めませんでした。', error)
-      wardPanel.showError()
       showWardStatisticsChartError()
     })
 

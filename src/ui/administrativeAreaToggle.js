@@ -1,5 +1,8 @@
 export function createAdministrativeAreaToggle(onChange) {
-  const toggle = document.querySelector('#wards-toggle')
-  toggle.addEventListener('change', () => onChange(toggle.checked))
+  const toggles = document.querySelectorAll('input[name="geojson-layer"]')
+  toggles.forEach((toggle) => {
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) onChange(toggle.value)
+    })
+  })
 }
-
