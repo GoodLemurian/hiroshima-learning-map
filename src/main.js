@@ -11,6 +11,7 @@ import { loadWardStatistics } from './data/loadWardStatistics.js'
 import { joinWardStatistics } from './data/joinWardStatistics.js'
 import { DEFAULT_STATISTIC, statisticDefinitions } from './data/statisticDefinitions.js'
 import { findNumericPropertyDefinitions, loadSchoolDistricts } from './data/loadSchoolDistricts.js'
+import { loadFireStations } from './data/loadFireStations.js'
 import { createChoroplethScale } from './analysis/createChoroplethScale.js'
 import {
   addAdministrativeAreaLayers,
@@ -20,6 +21,7 @@ import {
   WARD_FILL_LAYER_ID,
 } from './map/administrativeAreaLayers.js'
 import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
+import { addFireStationLayers, FIRE_STATION_LAYER_ID, setFireStationVisibility } from './map/fireStationLayers.js'
 import { bindFeaturePropertyPopup } from './map/featurePropertyPopup.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
@@ -115,6 +117,10 @@ document.querySelector('#app').innerHTML = `
         <span>小学校区を表示</span>
       </label>
       <label class="ward-toggle">
+        <input name="geojson-layer" value="fire-stations" type="radio" />
+        <span>消防署所を表示</span>
+      </label>
+      <label class="ward-toggle">
         <input name="geojson-layer" value="none" type="radio" />
         <span>なし</span>
       </label>
@@ -158,8 +164,8 @@ map.once('load', () => {
   const drawingState = createDrawingState()
   const legend = createChoroplethLegend()
   const numericColumns = Object.keys(statisticDefinitions)
-  Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns }), loadSchoolDistricts()])
-    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts]) => {
+  Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns }), loadSchoolDistricts(), loadFireStations()])
+    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, fireStations]) => {
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
@@ -167,6 +173,7 @@ map.once('load', () => {
         }
         addAdministrativeAreaLayers(map, joined.featureCollection)
         addSchoolDistrictLayers(map, schoolDistricts)
+        addFireStationLayers(map, fireStations)
         const schoolDefinitions = findNumericPropertyDefinitions(schoolDistricts)
         let activeLayer = 'wards'
         let selectedStatistic = DEFAULT_STATISTIC
@@ -235,17 +242,33 @@ map.once('load', () => {
             return properties.length ? { title: '小学校区の属性', properties } : null
           },
         })
+        const fireStationPropertyPopup = bindFeaturePropertyPopup({
+          map,
+          layerId: FIRE_STATION_LAYER_ID,
+          isEnabled: () => drawingState.getState().mode === 'select',
+          describeFeature: (feature) => {
+            const properties = Object.entries(feature?.properties || {})
+              .filter(([, value]) => value !== null && value !== '')
+              .map(([label, value]) => ({ label, value: String(value) }))
+            return properties.length
+              ? { title: feature.properties?.['名称'] || '消防署所', properties }
+              : null
+          },
+        })
         createAdministrativeAreaToggle((nextLayer) => {
           const wardsVisible = nextLayer === 'wards'
           const schoolsVisible = nextLayer === 'school-districts'
+          const fireStationsVisible = nextLayer === 'fire-stations'
           const definitions = wardsVisible ? statisticDefinitions : schoolsVisible ? schoolDefinitions : {}
           const statisticKeys = Object.keys(definitions)
           const hasStatistics = statisticKeys.length > 0
           activeLayer = nextLayer
           if (!wardsVisible) wardPropertyPopup.remove()
           if (!schoolsVisible) schoolPropertyPopup.remove()
+          if (!fireStationsVisible) fireStationPropertyPopup.remove()
           wardInteractions.setVisible(wardsVisible)
           setSchoolDistrictVisibility(map, schoolsVisible)
+          setFireStationVisibility(map, fireStationsVisible)
           document.querySelector('.statistic-control').hidden = !hasStatistics
           legend.setVisible(hasStatistics)
           chartToggle.setVisible(wardsVisible)
