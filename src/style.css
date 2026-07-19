@@ -64,10 +64,8 @@ h1 {
   height: 100%;
 }
 
-.maplibregl-ctrl-bottom-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+.maplibregl-ctrl-top-right {
+  top: 60px;
 }
 
 .maplibregl-ctrl-scale {
@@ -77,7 +75,7 @@ h1 {
 
 .base-map-selector {
   position: absolute;
-  inset: 70px 190px auto auto;
+  inset: 70px 140px auto auto;
   min-width: 132px;
   margin: 0;
   padding: 8px;
@@ -323,7 +321,7 @@ h1 {
 
 .map-action-buttons {
   position: absolute;
-  inset: 12px 52px auto auto;
+  inset: 12px 12px auto auto;
   display: flex;
   gap: 8px;
   z-index: 2;
@@ -368,7 +366,7 @@ h1 {
 
 .drawing-panel {
   position: absolute;
-  inset: 70px 12px auto auto;
+  inset: 70px 52px auto auto;
   width: fit-content;
   max-width: calc(100% - 24px);
   padding: 10px;
@@ -622,7 +620,7 @@ h1 {
   }
 
   .drawing-panel {
-    right: 12px;
+    right: 52px;
     left: 12px;
     overflow-x: auto;
   }
