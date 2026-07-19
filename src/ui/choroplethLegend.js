@@ -10,7 +10,7 @@ export function createChoroplethLegend() {
     update(definition, scale) {
       legend.replaceChildren()
       const title = document.createElement('h3')
-      title.textContent = `${definition.label}（${definition.unit}）`
+      title.textContent = definition.unit ? `${definition.label}（${definition.unit}）` : definition.label
       const list = document.createElement('ul')
       scale.legendItems.forEach((item) => {
         const row = document.createElement('li')
@@ -18,8 +18,8 @@ export function createChoroplethLegend() {
         swatch.className = 'legend-swatch'
         swatch.style.backgroundColor = item.color
         const label = item.singleValue
-          ? `${formatNumber(item.minimum, definition)} ${definition.unit}`
-          : `${formatNumber(item.minimum, definition)} 〜 ${formatNumber(item.maximum, definition)} ${definition.unit}${item.last ? '（最大）' : ''}`
+          ? `${formatNumber(item.minimum, definition)}${definition.unit ? ` ${definition.unit}` : ''}`
+          : `${formatNumber(item.minimum, definition)} 〜 ${formatNumber(item.maximum, definition)}${definition.unit ? ` ${definition.unit}` : ''}${item.last ? '（最大）' : ''}`
         row.append(swatch, label)
         list.append(row)
       })

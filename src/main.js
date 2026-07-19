@@ -10,6 +10,7 @@ import { loadAdministrativeAreas } from './data/loadAdministrativeAreas.js'
 import { loadWardStatistics } from './data/loadWardStatistics.js'
 import { joinWardStatistics } from './data/joinWardStatistics.js'
 import { DEFAULT_STATISTIC, statisticDefinitions } from './data/statisticDefinitions.js'
+import { findNumericPropertyDefinitions, loadSchoolDistricts } from './data/loadSchoolDistricts.js'
 import { createChoroplethScale } from './analysis/createChoroplethScale.js'
 import {
   addAdministrativeAreaLayers,
@@ -18,7 +19,7 @@ import {
   setAdministrativeAreaColors,
   WARD_FILL_LAYER_ID,
 } from './map/administrativeAreaLayers.js'
-import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
+import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
 import { bindFeaturePropertyPopup } from './map/featurePropertyPopup.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
@@ -32,13 +33,6 @@ import {
 } from './chart/createWardStatisticsChart.js'
 
 document.querySelector('#app').innerHTML = `
-  <header class="app-header">
-    <div>
-      <p class="eyebrow">広島市 地域学習</p>
-      <h1>ひろしまを地図で見てみよう</h1>
-    </div>
-    <p class="app-header__hint">地図を動かしたり、拡大したりできます</p>
-  </header>
   <main class="map-area">
     <div id="map" aria-label="広島市の地図"></div>
     <div class="map-action-buttons">
@@ -120,6 +114,10 @@ document.querySelector('#app').innerHTML = `
         <input name="geojson-layer" value="school-districts" type="radio" />
         <span>小学校区を表示</span>
       </label>
+      <label class="ward-toggle">
+        <input name="geojson-layer" value="none" type="radio" />
+        <span>なし</span>
+      </label>
       <label class="statistic-control" for="statistic-selector">
         <span>色分けするもの</span>
         <select id="statistic-selector"></select>
@@ -140,11 +138,6 @@ document.querySelector('#app').innerHTML = `
       地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。
     </p>
   </main>
-  <footer class="attribution">
-    背景地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noreferrer">国土地理院</a>
-    ／ 標高：<a href="https://tiles.gsj.jp/tiles/elev/tiles.html" target="_blank" rel="noreferrer">産総研地質調査総合センター</a>
-    ／ 統計：<a href="https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html" target="_blank" rel="noreferrer">広島市 年齢別人口（区役所別）</a>（2026年5月31日、CC BY 2.1 JP）
-  </footer>
 `
 
 const map = createHiroshimaMap({
@@ -165,28 +158,37 @@ map.once('load', () => {
   const drawingState = createDrawingState()
   const legend = createChoroplethLegend()
   const numericColumns = Object.keys(statisticDefinitions)
-  Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns })])
-    .then(([{ featureCollection, wardCodes }, { records }]) => {
+  Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns }), loadSchoolDistricts()])
+    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts]) => {
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
           console.warn('一部の区は統計データなしとして表示します。')
         }
         addAdministrativeAreaLayers(map, joined.featureCollection)
-        addSchoolDistrictLayers(map)
+        addSchoolDistrictLayers(map, schoolDistricts)
+        const schoolDefinitions = findNumericPropertyDefinitions(schoolDistricts)
+        let activeLayer = 'wards'
         let selectedStatistic = DEFAULT_STATISTIC
         const initialDefinition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
         const chart = createWardStatisticsChart(records, initialDefinition)
         const updateStatistic = (key) => {
           selectedStatistic = key
-          const definition = { ...statisticDefinitions[key], key }
-          const values = records.map((record) => record[key])
+          const definitions = activeLayer === 'wards' ? statisticDefinitions : schoolDefinitions
+          const definition = { ...definitions[key], key }
+          const values = activeLayer === 'wards'
+            ? records.map((record) => record[key])
+            : schoolDistricts.features.map((feature) => feature.properties?.[key])
           const scale = createChoroplethScale(values, definition.property)
-          setAdministrativeAreaColors(map, scale.expression)
+          if (activeLayer === 'wards') {
+            setAdministrativeAreaColors(map, scale.expression)
+            chart.setStatistic(definition)
+          } else {
+            setSchoolDistrictColors(map, scale.expression)
+          }
           legend.update(definition, scale)
-          chart.setStatistic(definition)
         }
-        createStatisticSelector(statisticDefinitions, selectedStatistic, updateStatistic)
+        const statisticSelector = createStatisticSelector(statisticDefinitions, selectedStatistic, updateStatistic)
         updateStatistic(selectedStatistic)
         const wardInteractions = bindAdministrativeAreaInteractions({
           map,
@@ -202,7 +204,7 @@ map.once('load', () => {
             ? `${new Intl.NumberFormat('ja-JP', { maximumFractionDigits: definition.maximumFractionDigits }).format(value)} ${definition.unit}`
             : 'データなし'
         }
-        bindFeaturePropertyPopup({
+        const wardPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: WARD_FILL_LAYER_ID,
           isEnabled: () => drawingState.getState().mode === 'select',
@@ -222,7 +224,7 @@ map.once('load', () => {
             }
           },
         })
-        bindFeaturePropertyPopup({
+        const schoolPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: SCHOOL_DISTRICT_FILL_LAYER_ID,
           isEnabled: () => drawingState.getState().mode === 'select',
@@ -233,13 +235,25 @@ map.once('load', () => {
             return properties.length ? { title: '小学校区の属性', properties } : null
           },
         })
-        createAdministrativeAreaToggle((selectedLayer) => {
-          const wardsVisible = selectedLayer === 'wards'
+        createAdministrativeAreaToggle((nextLayer) => {
+          const wardsVisible = nextLayer === 'wards'
+          const schoolsVisible = nextLayer === 'school-districts'
+          const definitions = wardsVisible ? statisticDefinitions : schoolsVisible ? schoolDefinitions : {}
+          const statisticKeys = Object.keys(definitions)
+          const hasStatistics = statisticKeys.length > 0
+          activeLayer = nextLayer
+          if (!wardsVisible) wardPropertyPopup.remove()
+          if (!schoolsVisible) schoolPropertyPopup.remove()
           wardInteractions.setVisible(wardsVisible)
-          legend.setVisible(wardsVisible)
-          setSchoolDistrictVisibility(map, !wardsVisible)
-          document.querySelector('.statistic-control').hidden = !wardsVisible
+          setSchoolDistrictVisibility(map, schoolsVisible)
+          document.querySelector('.statistic-control').hidden = !hasStatistics
+          legend.setVisible(hasStatistics)
           chartToggle.setVisible(wardsVisible)
+          if (hasStatistics) {
+            selectedStatistic = wardsVisible ? DEFAULT_STATISTIC : statisticKeys[0]
+            statisticSelector.setOptions(definitions, selectedStatistic)
+            updateStatistic(selectedStatistic)
+          }
         })
         fitAdministrativeAreas(map, joined.featureCollection)
       } catch (error) {
