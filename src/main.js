@@ -21,6 +21,10 @@ import { createAdministrativeAreaPanel } from './ui/administrativeAreaPanel.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
+import {
+  createWardPopulationChart,
+  showWardPopulationChartError,
+} from './chart/createWardPopulationChart.js'
 
 document.querySelector('#app').innerHTML = `
   <header class="app-header">
@@ -83,6 +87,13 @@ document.querySelector('#app').innerHTML = `
         <p>地図の区をえらんでください</p>
       </div>
     </section>
+    <section class="chart-panel" aria-labelledby="chart-panel-title">
+      <h2 id="chart-panel-title">区ごとの人口</h2>
+      <p>棒の長さで人口をくらべてみよう</p>
+      <div id="ward-population-chart" class="ward-population-chart" aria-live="polite">
+        グラフを読みこんでいます…
+      </div>
+    </section>
     <p id="map-error" class="error-message" role="alert" hidden>
       地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。
     </p>
@@ -111,6 +122,7 @@ map.once('load', () => {
   const numericColumns = Object.keys(statisticDefinitions)
   Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns })])
     .then(([{ featureCollection, wardCodes }, { records }]) => {
+      createWardPopulationChart(records)
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
@@ -147,6 +159,7 @@ map.once('load', () => {
     .catch((error) => {
       console.error('行政区または統計データを読み込めませんでした。', error)
       wardPanel.showError()
+      showWardPopulationChartError()
     })
 
   const showDrawingMessage = (message, isError = false) => {

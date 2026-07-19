@@ -90,6 +90,49 @@ h1 {
   z-index: 1;
 }
 
+.chart-panel {
+  position: absolute;
+  inset: auto auto 36px 12px;
+  width: min(430px, calc(100% - 296px));
+  min-width: 320px;
+  padding: 12px 14px;
+  border: 2px solid #176b55;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+  z-index: 1;
+}
+
+.chart-panel h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.chart-panel > p {
+  margin: 2px 0 5px;
+  color: #40534d;
+  font-size: 0.78rem;
+}
+
+.ward-population-chart {
+  min-height: 230px;
+  font-size: 0.85rem;
+}
+
+.ward-population-chart .vega-embed,
+.ward-population-chart canvas {
+  max-width: 100%;
+}
+
+.ward-population-chart.is-error {
+  min-height: auto;
+  padding: 10px;
+  border-radius: 8px;
+  color: #7a1711;
+  background: #fff4f2;
+  font-weight: 700;
+}
+
 .ward-panel h2 {
   margin: 0 0 8px;
   font-size: 1.05rem;
@@ -503,6 +546,21 @@ h1 {
     bottom: 28px;
     left: 12px;
     width: auto;
+  }
+
+  .chart-panel {
+    right: 12px;
+    bottom: 330px;
+    left: 12px;
+    width: auto;
+    min-width: 0;
+    padding: 8px 10px;
+  }
+
+  .ward-population-chart {
+    min-height: 180px;
+    max-height: 180px;
+    overflow: auto;
   }
 
   .drawing-tools {
