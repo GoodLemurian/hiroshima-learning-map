@@ -219,6 +219,36 @@ h1 {
   font-weight: 700;
 }
 
+.measurement-panel {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-top: 2px solid #b8c9c3;
+  border-radius: 0 0 8px 8px;
+  background: #f2f8f6;
+}
+
+.measurement-panel h3 {
+  margin: 0 0 5px;
+  font-size: 0.9rem;
+}
+
+#measurement-result {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+#measurement-result.has-measurement {
+  font-size: 1.15rem;
+}
+
+.measurement-note {
+  margin: 4px 0 0;
+  color: #52625d;
+  font-size: 0.72rem;
+}
+
 .drawing-panel.is-disabled .drawing-tools button {
   pointer-events: none;
   opacity: 0.5;

@@ -61,7 +61,22 @@ export function createDrawControl({ map, state, onMessage }) {
     }
   }
 
-  terraDraw.on('finish', safeEvent(syncFeatures))
+  terraDraw.on(
+    'finish',
+    safeEvent((id) => {
+      syncFeatures()
+      if (id === null || id === undefined) return
+
+      setMode('select')
+      try {
+        terraDraw.selectFeature(id)
+        state.setSelectedFeature(id)
+      } catch (error) {
+        console.warn('作図した図形を自動選択できませんでした。', error)
+        state.setSelectedFeature(id)
+      }
+    }),
+  )
   terraDraw.on('change', safeEvent(syncFeatures))
   terraDraw.on('select', safeEvent((id) => state.setSelectedFeature(id)))
   terraDraw.on('deselect', safeEvent(() => state.resetSelection()))

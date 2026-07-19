@@ -5,6 +5,7 @@ import { createBaseMapSelector, createTerrainToggle } from './ui.js'
 import { createDrawControl } from './drawing/createDrawControl.js'
 import { createDrawingState } from './drawing/drawingState.js'
 import { createDrawingPanel } from './ui/drawingPanel.js'
+import { createMeasurementPanel } from './ui/measurementPanel.js'
 
 document.querySelector('#app').innerHTML = `
   <header class="app-header">
@@ -38,6 +39,11 @@ document.querySelector('#app').innerHTML = `
       </div>
       <p id="drawing-count" class="drawing-count" aria-live="polite">かいたもの：0こ</p>
       <p id="drawing-status" class="drawing-status">かいたものをえらぶと、動かしたり形を直したりできます。</p>
+      <section class="measurement-panel" aria-labelledby="measurement-title">
+        <h3 id="measurement-title">はかった結果</h3>
+        <p id="measurement-result" aria-live="polite">図形をえらぶと、長さや広さが分かります</p>
+        <p class="measurement-note">※ 長さや広さはおよその値です</p>
+      </section>
     </section>
     <fieldset class="base-map-selector">
       <legend>地図の種類</legend>
@@ -101,6 +107,7 @@ map.once('load', () => {
       }
     },
   })
+  createMeasurementPanel(drawingState)
 
   window.getDrawnFeatureCollection = drawing.getDrawnFeatureCollection
 })
