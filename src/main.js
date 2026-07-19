@@ -12,6 +12,7 @@ import { joinWardStatistics } from './data/joinWardStatistics.js'
 import { DEFAULT_STATISTIC, statisticDefinitions } from './data/statisticDefinitions.js'
 import { findNumericPropertyDefinitions, loadSchoolDistricts } from './data/loadSchoolDistricts.js'
 import { loadFireStations } from './data/loadFireStations.js'
+import { loadDemarcatedFisheryRights } from './data/loadDemarcatedFisheryRights.js'
 import { createChoroplethScale } from './analysis/createChoroplethScale.js'
 import {
   addAdministrativeAreaLayers,
@@ -22,6 +23,11 @@ import {
 } from './map/administrativeAreaLayers.js'
 import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
 import { addFireStationLayers, FIRE_STATION_LAYER_ID, setFireStationVisibility } from './map/fireStationLayers.js'
+import {
+  addDemarcatedFisheryRightLayers,
+  DEMARCATED_FISHERY_RIGHT_FILL_LAYER_ID,
+  setDemarcatedFisheryRightVisibility,
+} from './map/demarcatedFisheryRightLayers.js'
 import { bindFeaturePropertyPopup } from './map/featurePropertyPopup.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
@@ -121,6 +127,10 @@ document.querySelector('#app').innerHTML = `
         <span>消防署所を表示</span>
       </label>
       <label class="ward-toggle">
+        <input name="geojson-layer" value="demarcated-fishery-rights" type="radio" />
+        <span>海しる 区画漁業権v2を表示</span>
+      </label>
+      <label class="ward-toggle">
         <input name="geojson-layer" value="none" type="radio" />
         <span>なし</span>
       </label>
@@ -164,8 +174,17 @@ map.once('load', () => {
   const drawingState = createDrawingState()
   const legend = createChoroplethLegend()
   const numericColumns = Object.keys(statisticDefinitions)
-  Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns }), loadSchoolDistricts(), loadFireStations()])
-    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, fireStations]) => {
+  Promise.all([
+    loadAdministrativeAreas(),
+    loadWardStatistics({ numericColumns }),
+    loadSchoolDistricts(),
+    loadFireStations(),
+    loadDemarcatedFisheryRights().catch((error) => {
+      console.error('区画漁業権データを読み込めませんでした。', error)
+      return { type: 'FeatureCollection', features: [] }
+    }),
+  ])
+    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, fireStations, fisheryRights]) => {
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
@@ -174,6 +193,7 @@ map.once('load', () => {
         addAdministrativeAreaLayers(map, joined.featureCollection)
         addSchoolDistrictLayers(map, schoolDistricts)
         addFireStationLayers(map, fireStations)
+        addDemarcatedFisheryRightLayers(map, fisheryRights)
         const schoolDefinitions = findNumericPropertyDefinitions(schoolDistricts)
         let activeLayer = 'wards'
         let selectedStatistic = DEFAULT_STATISTIC
@@ -255,10 +275,24 @@ map.once('load', () => {
               : null
           },
         })
+        const fisheryRightPropertyPopup = bindFeaturePropertyPopup({
+          map,
+          layerId: DEMARCATED_FISHERY_RIGHT_FILL_LAYER_ID,
+          isEnabled: () => drawingState.getState().mode === 'select',
+          describeFeature: (feature) => {
+            const properties = Object.entries(feature?.properties || {})
+              .filter(([, value]) => value !== null && String(value).trim() !== '')
+              .map(([label, value]) => ({ label, value: String(value) }))
+            return properties.length
+              ? { title: feature.properties?.['免許番号'] || '区画漁業権', properties }
+              : null
+          },
+        })
         createAdministrativeAreaToggle((nextLayer) => {
           const wardsVisible = nextLayer === 'wards'
           const schoolsVisible = nextLayer === 'school-districts'
           const fireStationsVisible = nextLayer === 'fire-stations'
+          const fisheryRightsVisible = nextLayer === 'demarcated-fishery-rights'
           const definitions = wardsVisible ? statisticDefinitions : schoolsVisible ? schoolDefinitions : {}
           const statisticKeys = Object.keys(definitions)
           const hasStatistics = statisticKeys.length > 0
@@ -266,9 +300,11 @@ map.once('load', () => {
           if (!wardsVisible) wardPropertyPopup.remove()
           if (!schoolsVisible) schoolPropertyPopup.remove()
           if (!fireStationsVisible) fireStationPropertyPopup.remove()
+          if (!fisheryRightsVisible) fisheryRightPropertyPopup.remove()
           wardInteractions.setVisible(wardsVisible)
           setSchoolDistrictVisibility(map, schoolsVisible)
           setFireStationVisibility(map, fireStationsVisible)
+          setDemarcatedFisheryRightVisibility(map, fisheryRightsVisible)
           document.querySelector('.statistic-control').hidden = !hasStatistics
           legend.setVisible(hasStatistics)
           chartToggle.setVisible(wardsVisible)
