@@ -1,7 +1,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './style.css'
 import { createHiroshimaMap } from './map.js'
-import { createBaseMapSelector, createTerrainToggle } from './ui.js'
+import { createBaseMapSelector, createElevationColorEditor, createTerrainToggle } from './ui.js'
 import { createDrawControl } from './drawing/createDrawControl.js'
 import { createDrawingState } from './drawing/drawingState.js'
 import { createDrawingPanel } from './ui/drawingPanel.js'
@@ -95,6 +95,17 @@ document.querySelector('#app').innerHTML = `
         <input id="terrain-toggle" type="checkbox" />
         <span>地形を立体にする</span>
       </label>
+      <div class="elevation-colors-editor">
+        <label class="terrain-option">
+          <input id="elevation-colors-toggle" type="checkbox" />
+          <span>自分で作る色別標高図</span>
+        </label>
+        <div id="elevation-color-rows"></div>
+        <label class="elevation-opacity">色の濃さ
+          <input id="elevation-colors-opacity" type="range" min="10" max="100" value="72" />
+        </label>
+        <button id="elevation-colors-reset" type="button">初期設定に戻す</button>
+      </div>
     </fieldset>
     <section id="ward-panel" class="ward-panel" aria-labelledby="ward-panel-title" hidden>
       <h2 id="ward-panel-title">広島市の区</h2>
@@ -139,6 +150,7 @@ const map = createHiroshimaMap({
 map.once('load', () => {
   createBaseMapSelector(map)
   createTerrainToggle(map)
+  createElevationColorEditor(map)
   createBaseMapPanelToggle()
   const wardPanelToggle = createWardPanelToggle()
 

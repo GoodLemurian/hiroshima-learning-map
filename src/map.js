@@ -1,10 +1,15 @@
 import maplibregl from 'maplibre-gl'
 import { registerGsjTerrainProtocol } from './terrain-protocol.js'
+import { registerElevationColorProtocol, setElevationColorStops } from './elevation-colors.js'
 
 const HIROSHIMA_CENTER = [132.4553, 34.3853]
 const TERRAIN_SOURCE_ID = 'gsj-elevation'
+const ELEVATION_COLOR_SOURCE_ID = 'gsj-elevation-colors'
+const ELEVATION_COLOR_LAYER_ID = 'gsj-elevation-colors-layer'
+const ELEVATION_TILE = 'tiles.gsj.jp/tiles/elev2/mixed/{z}/{x}/{y}.webp'
 
 registerGsjTerrainProtocol(maplibregl)
+registerElevationColorProtocol(maplibregl)
 
 export const BASE_MAPS = [
   {
@@ -44,7 +49,7 @@ const baseMapStyle = {
         {
           type: 'raster-dem',
           tiles: [
-            'gsidem://tiles.gsj.jp/tiles/elev2/mixed/{z}/{x}/{y}.webp',
+            `gsidem://${ELEVATION_TILE}`,
           ],
           tileSize: 512,
           maxzoom: 17,
@@ -52,16 +57,49 @@ const baseMapStyle = {
           attribution: '産総研地質調査総合センター シームレス標高タイル',
         },
       ],
+      [
+        ELEVATION_COLOR_SOURCE_ID,
+        {
+          type: 'raster',
+          tiles: [`gsielevationcolor://${ELEVATION_TILE}?revision=0`],
+          tileSize: 512,
+          maxzoom: 17,
+          attribution: '産総研地質調査総合センター シームレス標高タイル',
+        },
+      ],
     ],
   ),
-  layers: BASE_MAPS.map(({ id }, index) => ({
+  layers: [
+    ...BASE_MAPS.map(({ id }, index) => ({
     id: `gsi-${id}-layer`,
     type: 'raster',
     source: `gsi-${id}`,
     layout: {
       visibility: index === 0 ? 'visible' : 'none',
     },
-  })),
+    })),
+    {
+      id: ELEVATION_COLOR_LAYER_ID,
+      type: 'raster',
+      source: ELEVATION_COLOR_SOURCE_ID,
+      layout: { visibility: 'none' },
+      paint: { 'raster-opacity': 0.72, 'raster-fade-duration': 0 },
+    },
+  ],
+}
+
+let elevationColorRevision = 0
+
+export function setElevationColors(map, { enabled, opacity, stops, refresh = true }) {
+  setElevationColorStops(stops)
+  map.setLayoutProperty(ELEVATION_COLOR_LAYER_ID, 'visibility', enabled ? 'visible' : 'none')
+  map.setPaintProperty(ELEVATION_COLOR_LAYER_ID, 'raster-opacity', opacity)
+  if (enabled && refresh) {
+    elevationColorRevision += 1
+    map.getSource(ELEVATION_COLOR_SOURCE_ID).setTiles([
+      `gsielevationcolor://${ELEVATION_TILE}?revision=${elevationColorRevision}`,
+    ])
+  }
 }
 
 export function setTerrainEnabled(map, enabled) {
