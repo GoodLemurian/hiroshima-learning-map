@@ -2,19 +2,25 @@ import { BASE_MAPS, setBaseMap, setElevationColors, setTerrainEnabled } from './
 import { DEFAULT_ELEVATION_COLORS } from './elevation-colors.js'
 
 export function createBaseMapSelector(map) {
-  const options = BASE_MAPS.map(
-    ({ id, label }, index) => `
+  const categories = ['地図', '写真']
+  const options = categories.map((category) => `
+    <section class="base-map-group" aria-labelledby="base-map-${category === '地図' ? 'maps' : 'photos'}-title">
+      <h3 id="base-map-${category === '地図' ? 'maps' : 'photos'}-title">${category}</h3>
+      ${BASE_MAPS.filter((baseMap) => baseMap.category === category).map(
+        ({ id, label }) => `
       <label class="base-map-option">
         <input
           type="radio"
           name="base-map"
           value="${id}"
-          ${index === 0 ? 'checked' : ''}
+          ${id === 'standard' ? 'checked' : ''}
         />
         <span>${label}</span>
       </label>
     `,
-  ).join('')
+      ).join('')}
+    </section>
+  `).join('')
 
   const selector = document.querySelector('#base-map-selector')
   selector.innerHTML = options

@@ -12,6 +12,7 @@ import { joinWardStatistics } from './data/joinWardStatistics.js'
 import { DEFAULT_STATISTIC, statisticDefinitions } from './data/statisticDefinitions.js'
 import { findNumericPropertyDefinitions, loadSchoolDistricts } from './data/loadSchoolDistricts.js'
 import { loadFireStations } from './data/loadFireStations.js'
+import { loadFireStationJurisdictions } from './data/loadFireStationJurisdictions.js'
 import { createChoroplethScale } from './analysis/createChoroplethScale.js'
 import {
   addAdministrativeAreaLayers,
@@ -22,6 +23,11 @@ import {
 } from './map/administrativeAreaLayers.js'
 import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
 import { addFireStationLayers, FIRE_STATION_LAYER_ID, setFireStationVisibility } from './map/fireStationLayers.js'
+import {
+  addFireStationJurisdictionLayers,
+  bindFireStationJurisdictionInteractions,
+  setFireStationJurisdictionVisibility,
+} from './map/fireStationJurisdictionLayers.js'
 import { bindFeaturePropertyPopup } from './map/featurePropertyPopup.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
@@ -87,14 +93,15 @@ document.querySelector('#app').innerHTML = `
       <span aria-hidden="true">▱</span>
       <span class="ward-panel-toggle__label">GeoJSONをえらぶ</span>
     </button>
-    <fieldset id="base-map-panel" class="base-map-selector" hidden>
-      <legend>地図の種類</legend>
+    <section id="base-map-panel" class="base-map-selector" aria-labelledby="base-map-panel-title" hidden>
+      <h2 id="base-map-panel-title">地図の種類</h2>
       <div id="base-map-selector" class="base-map-options"></div>
-      <label class="terrain-option">
-        <input id="terrain-toggle" type="checkbox" />
-        <span>地形を立体にする</span>
-      </label>
-      <div class="elevation-colors-editor">
+      <section class="base-map-group terrain-group" aria-labelledby="terrain-group-title">
+        <h3 id="terrain-group-title">地形</h3>
+        <label class="terrain-option">
+          <input id="terrain-toggle" type="checkbox" />
+          <span>立体表示</span>
+        </label>
         <label class="terrain-option">
           <input
             id="elevation-colors-toggle"
@@ -102,7 +109,7 @@ document.querySelector('#app').innerHTML = `
             aria-controls="elevation-colors-settings"
             aria-expanded="false"
           />
-          <span>自分で作る色別標高図</span>
+          <span>色別標高図</span>
         </label>
         <div id="elevation-colors-settings" hidden>
           <div id="elevation-color-rows"></div>
@@ -111,8 +118,8 @@ document.querySelector('#app').innerHTML = `
           </label>
           <button id="elevation-colors-reset" type="button">初期設定に戻す</button>
         </div>
-      </div>
-    </fieldset>
+      </section>
+    </section>
     <section id="ward-panel" class="ward-panel" aria-labelledby="ward-panel-title" hidden>
       <h2 id="ward-panel-title">GeoJSONをえらぶ</h2>
       <label class="ward-toggle">
@@ -171,8 +178,14 @@ map.once('load', () => {
   const drawingState = createDrawingState()
   const legend = createChoroplethLegend()
   const numericColumns = Object.keys(statisticDefinitions)
-  Promise.all([loadAdministrativeAreas(), loadWardStatistics({ numericColumns }), loadSchoolDistricts(), loadFireStations()])
-    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, fireStations]) => {
+  Promise.all([
+    loadAdministrativeAreas(),
+    loadWardStatistics({ numericColumns }),
+    loadSchoolDistricts(),
+    loadFireStations(),
+    loadFireStationJurisdictions(),
+  ])
+    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, fireStations, fireStationJurisdictions]) => {
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
@@ -180,6 +193,7 @@ map.once('load', () => {
         }
         addAdministrativeAreaLayers(map, joined.featureCollection)
         addSchoolDistrictLayers(map, schoolDistricts)
+        addFireStationJurisdictionLayers(map, fireStationJurisdictions)
         addFireStationLayers(map, fireStations)
         const schoolDefinitions = findNumericPropertyDefinitions(schoolDistricts)
         let activeLayer = 'wards'
@@ -262,6 +276,10 @@ map.once('load', () => {
               : null
           },
         })
+        const fireStationJurisdictionInteractions = bindFireStationJurisdictionInteractions({
+          map,
+          isEnabled: () => drawingState.getState().mode === 'select',
+        })
         createAdministrativeAreaToggle((nextLayer) => {
           const wardsVisible = nextLayer === 'wards'
           const schoolsVisible = nextLayer === 'school-districts'
@@ -272,9 +290,13 @@ map.once('load', () => {
           activeLayer = nextLayer
           if (!wardsVisible) wardPropertyPopup.remove()
           if (!schoolsVisible) schoolPropertyPopup.remove()
-          if (!fireStationsVisible) fireStationPropertyPopup.remove()
+          if (!fireStationsVisible) {
+            fireStationPropertyPopup.remove()
+            fireStationJurisdictionInteractions.remove()
+          }
           wardInteractions.setVisible(wardsVisible)
           setSchoolDistrictVisibility(map, schoolsVisible)
+          setFireStationJurisdictionVisibility(map, fireStationsVisible)
           setFireStationVisibility(map, fireStationsVisible)
           document.querySelector('.statistic-control').hidden = !hasStatistics
           legend.setVisible(hasStatistics)

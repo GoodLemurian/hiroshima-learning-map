@@ -49,20 +49,14 @@ body,
   width: min(300px, calc(100vw - 24px));
   max-height: calc(100% - 82px);
   margin: 0;
-  padding: 8px;
-  border: 0;
-  border-radius: 10px;
+  padding: 12px;
+  border: 2px solid #176b55;
+  border-radius: 12px;
   color: #213547;
   background: rgb(255 255 255 / 94%);
   box-shadow: 0 1px 6px rgb(0 0 0 / 25%);
   z-index: 1;
   overflow-y: auto;
-}
-
-.elevation-colors-editor {
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid #b8c9c3;
 }
 
 #elevation-colors-settings[hidden] {
@@ -589,21 +583,38 @@ body,
   opacity: 0.5;
 }
 
-.base-map-selector legend {
-  padding: 0 4px;
-  font-size: 0.8rem;
-  font-weight: 700;
+.base-map-selector h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
 }
 
 .base-map-options {
   display: grid;
+  gap: 10px;
+}
+
+.base-map-group {
+  display: grid;
   gap: 4px;
+}
+
+.base-map-group + .base-map-group,
+.terrain-group {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #b8c9c3;
+}
+
+.base-map-group h3 {
+  margin: 0 0 2px;
+  color: #40534d;
+  font-size: 0.88rem;
 }
 
 .base-map-option {
   display: flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 42px;
   padding: 4px 8px;
   border-radius: 7px;
   cursor: pointer;
@@ -630,11 +641,15 @@ body,
   display: flex;
   align-items: center;
   min-height: 42px;
-  margin-top: 6px;
   padding: 6px 8px;
-  border-top: 1px solid #c8d2ce;
+  border-radius: 7px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.terrain-option:has(input:checked) {
+  color: #fff;
+  background: #176b55;
 }
 
 .terrain-option input {

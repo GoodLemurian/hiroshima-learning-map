@@ -14,108 +14,14 @@ registerElevationColorProtocol(maplibregl)
 export const BASE_MAPS = [
   {
     id: 'standard',
-    label: '標準地図',
+    label: '現在の地図',
+    category: '地図',
     tiles: ['https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png'],
-  },
-  {
-    id: 'pale',
-    label: '淡色地図',
-    tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
-  },
-  {
-    id: 'photo',
-    label: '航空写真',
-    tiles: [
-      'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg',
-    ],
-  },
-  {
-    id: 'photo-1960s',
-    label: '1960年代の写真',
-    tiles: [
-      'https://cyberjapandata.gsi.go.jp/xyz/ort_old10/{z}/{x}/{y}.png',
-    ],
-  },
-  {
-    id: 'photo-1970s',
-    label: '1970年代の写真',
-    tiles: [
-      'https://cyberjapandata.gsi.go.jp/xyz/gazo1/{z}/{x}/{y}.jpg',
-    ],
-  },
-  {
-    id: 'photo-1980s',
-    label: '1980年代の写真',
-    tiles: [
-      'https://cyberjapandata.gsi.go.jp/xyz/gazo4/{z}/{x}/{y}.jpg',
-    ],
-  },
-  {
-    id: 'photo-2000s',
-    label: '2000年代の写真',
-    tiles: [
-      'https://cyberjapandata.gsi.go.jp/xyz/nendophoto2008/{z}/{x}/{y}.png',
-      'https://cyberjapandata.gsi.go.jp/xyz/nendophoto2009/{z}/{x}/{y}.png',
-    ],
-  },
-  {
-    id: 'map-meiji',
-    label: '明治時代の地図',
-    tiles: [
-      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/2man/{z}/{x}/{y}.png',
-    ],
-    attribution: '今昔マップ on the web',
-    scheme: 'tms',
-    minzoom: 8,
-    maxzoom: 16,
-  },
-  {
-    id: 'map-early-showa',
-    label: '昭和初期の地図',
-    tiles: [
-      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/00/{z}/{x}/{y}.png',
-    ],
-    attribution: '今昔マップ on the web',
-    scheme: 'tms',
-    minzoom: 8,
-    maxzoom: 16,
-  },
-  {
-    id: 'map-1950s',
-    label: '1950年代の地図',
-    tiles: [
-      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/01/{z}/{x}/{y}.png',
-    ],
-    attribution: '今昔マップ on the web',
-    scheme: 'tms',
-    minzoom: 8,
-    maxzoom: 16,
-  },
-  {
-    id: 'map-1960s',
-    label: '1960年代の地図',
-    tiles: [
-      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/02/{z}/{x}/{y}.png',
-    ],
-    attribution: '今昔マップ on the web',
-    scheme: 'tms',
-    minzoom: 8,
-    maxzoom: 16,
-  },
-  {
-    id: 'map-1980s',
-    label: '1980年代の地図',
-    tiles: [
-      'https://ktgis.net/kjmapw/kjtilemap/hiroshima/03/{z}/{x}/{y}.png',
-    ],
-    attribution: '今昔マップ on the web',
-    scheme: 'tms',
-    minzoom: 8,
-    maxzoom: 16,
   },
   {
     id: 'map-1990s',
     label: '1990年代の地図',
+    category: '地図',
     tiles: [
       'https://ktgis.net/kjmapw/kjtilemap/hiroshima/04/{z}/{x}/{y}.png',
     ],
@@ -124,6 +30,47 @@ export const BASE_MAPS = [
     minzoom: 8,
     maxzoom: 16,
   },
+  ...[
+    ['map-1980s', '1980年代の地図', '03'],
+    ['map-1960s', '1960年代の地図', '02'],
+    ['map-1950s', '1950年代の地図', '01'],
+    ['map-early-showa', '昭和初期の地図', '00'],
+    ['map-meiji', '明治時代の地図', '2man'],
+  ].map(([id, label, period]) => ({
+    id,
+    label,
+    category: '地図',
+    tiles: [`https://ktgis.net/kjmapw/kjtilemap/hiroshima/${period}/{z}/{x}/{y}.png`],
+    attribution: '今昔マップ on the web',
+    scheme: 'tms',
+    minzoom: 8,
+    maxzoom: 16,
+  })),
+  {
+    id: 'photo',
+    label: '現在の写真',
+    category: '写真',
+    tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'],
+  },
+  {
+    id: 'photo-2000s',
+    label: '2000年代の写真',
+    category: '写真',
+    tiles: [
+      'https://cyberjapandata.gsi.go.jp/xyz/nendophoto2008/{z}/{x}/{y}.png',
+      'https://cyberjapandata.gsi.go.jp/xyz/nendophoto2009/{z}/{x}/{y}.png',
+    ],
+  },
+  ...[
+    ['photo-1980s', '1980年代の写真', 'gazo4'],
+    ['photo-1970s', '1970年代の写真', 'gazo1'],
+    ['photo-1960s', '1960年代の写真', 'ort_old10'],
+  ].map(([id, label, tile]) => ({
+    id,
+    label,
+    category: '写真',
+    tiles: [`https://cyberjapandata.gsi.go.jp/xyz/${tile}/{z}/{x}/{y}.${tile === 'ort_old10' ? 'png' : 'jpg'}`],
+  })),
 ]
 
 const baseMapLayerId = (id, index) => `gsi-${id}-${index}-layer`
