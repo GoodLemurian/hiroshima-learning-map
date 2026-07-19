@@ -299,6 +299,10 @@ body,
   font-weight: 800;
 }
 
+.statistic-control[hidden] {
+  display: none;
+}
+
 .statistic-control select {
   min-height: 44px;
   padding: 7px 10px;
