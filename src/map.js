@@ -1,7 +1,10 @@
 import maplibregl from 'maplibre-gl'
+import { registerGsjTerrainProtocol } from './terrain-protocol.js'
 
 const HIROSHIMA_CENTER = [132.4553, 34.3853]
 const TERRAIN_SOURCE_ID = 'gsj-elevation'
+
+registerGsjTerrainProtocol(maplibregl)
 
 export const BASE_MAPS = [
   {
@@ -41,15 +44,11 @@ const baseMapStyle = {
         {
           type: 'raster-dem',
           tiles: [
-            'https://tiles.gsj.jp/tiles/elev2/mixed/{z}/{x}/{y}.webp',
+            'gsidem://tiles.gsj.jp/tiles/elev2/mixed/{z}/{x}/{y}.webp',
           ],
           tileSize: 512,
           maxzoom: 17,
-          encoding: 'custom',
-          redFactor: 655.36,
-          greenFactor: 2.56,
-          blueFactor: 0.01,
-          baseShift: 0,
+          encoding: 'mapbox',
           attribution: '産総研地質調査総合センター シームレス標高タイル',
         },
       ],
