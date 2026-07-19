@@ -102,7 +102,11 @@ export function createHiroshimaMap({ container, onError }) {
 
   map.addControl(
     new maplibregl.NavigationControl({ showCompass: true }),
-    'top-right',
+    'bottom-right',
+  )
+  map.addControl(
+    new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }),
+    'bottom-left',
   )
   map.addControl(
     new maplibregl.AttributionControl({ compact: true }),
