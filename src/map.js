@@ -180,7 +180,7 @@ export function setBaseMap(map, selectedId) {
   })
 }
 
-export function createHiroshimaMap({ container, onError }) {
+export function createHiroshimaMap({ container, onError, navigationPosition = 'top-right' }) {
   const map = new maplibregl.Map({
     container,
     style: baseMapStyle,
@@ -196,7 +196,7 @@ export function createHiroshimaMap({ container, onError }) {
 
   map.addControl(
     new maplibregl.NavigationControl({ showCompass: true }),
-    'top-right',
+    navigationPosition,
   )
   map.addControl(
     new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }),
@@ -210,4 +210,30 @@ export function createHiroshimaMap({ container, onError }) {
   map.once('error', onError)
 
   return map
+}
+
+export function synchronizeMaps(firstMap, secondMap) {
+  let syncing = false
+
+  const copyCamera = (source, target) => {
+    if (syncing) return
+    syncing = true
+    target.jumpTo({
+      center: source.getCenter(),
+      zoom: source.getZoom(),
+      bearing: source.getBearing(),
+      pitch: source.getPitch(),
+    })
+    syncing = false
+  }
+
+  const syncSecond = () => copyCamera(firstMap, secondMap)
+  const syncFirst = () => copyCamera(secondMap, firstMap)
+  firstMap.on('move', syncSecond)
+  secondMap.on('move', syncFirst)
+
+  return () => {
+    firstMap.off('move', syncSecond)
+    secondMap.off('move', syncFirst)
+  }
 }

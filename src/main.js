@@ -1,7 +1,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './style.css'
-import { createHiroshimaMap } from './map.js'
-import { createBaseMapSelector, createElevationColorEditor, createTerrainToggle } from './ui.js'
+import { createHiroshimaMap, synchronizeMaps } from './map.js'
+import { createBaseMapSelector, createComparisonMapSelector, createElevationColorEditor, createTerrainToggle } from './ui.js'
 import { createDrawControl } from './drawing/createDrawControl.js'
 import { createDrawingState } from './drawing/drawingState.js'
 import { createDrawingPanel } from './ui/drawingPanel.js'
@@ -42,17 +42,32 @@ import {
 
 document.querySelector('#app').innerHTML = `
   <main class="map-area">
-    <div id="map" aria-label="広島市の地図"></div>
+    <div class="map-comparison is-single-map" aria-label="2種類の地図を比較">
+      <section class="map-pane map-pane--primary" aria-label="左側の地図">
+        <div id="map" class="map-canvas" aria-label="広島市の左側の地図"></div>
+        <label class="map-type-select map-type-select--left">
+          <span>左の地図</span>
+          <select id="left-map-type" aria-label="左側の地図の種類"></select>
+        </label>
+      </section>
+      <section class="map-pane map-pane--comparison" aria-label="右側の地図">
+        <div id="comparison-map" class="map-canvas" aria-label="広島市の右側の地図"></div>
+        <label class="map-type-select map-type-select--right">
+          <span>右の地図</span>
+          <select id="right-map-type" aria-label="右側の地図の種類"></select>
+        </label>
+      </section>
+    </div>
     <div class="map-action-buttons">
       <button
-        id="base-map-panel-toggle"
-        class="base-map-panel-toggle"
+        id="map-comparison-toggle"
+        class="map-comparison-toggle"
         type="button"
-        aria-controls="base-map-panel"
-        aria-expanded="false"
+        aria-controls="comparison-map"
+        aria-pressed="false"
       >
-        <span aria-hidden="true">▧</span>
-        <span class="base-map-panel-toggle__label">地図の種類</span>
+        <span aria-hidden="true">◫</span>
+        <span class="map-comparison-toggle__label">2画面をON</span>
       </button>
       <button
         id="drawing-panel-toggle"
@@ -83,16 +98,28 @@ document.querySelector('#app').innerHTML = `
         <p class="measurement-note">※ 長さや広さはおよその値です</p>
       </section>
     </section>
-    <button
-      id="ward-panel-toggle"
-      class="ward-panel-toggle"
-      type="button"
-      aria-controls="ward-panel"
-      aria-expanded="false"
-    >
-      <span aria-hidden="true">▱</span>
-      <span class="ward-panel-toggle__label">GeoJSONをえらぶ</span>
-    </button>
+    <div class="map-left-action-buttons">
+      <button
+        id="ward-panel-toggle"
+        class="ward-panel-toggle"
+        type="button"
+        aria-controls="ward-panel"
+        aria-expanded="false"
+      >
+        <span aria-hidden="true">▱</span>
+        <span class="ward-panel-toggle__label">データをえらぶ</span>
+      </button>
+      <button
+        id="base-map-panel-toggle"
+        class="base-map-panel-toggle"
+        type="button"
+        aria-controls="base-map-panel"
+        aria-expanded="false"
+      >
+        <span aria-hidden="true">▧</span>
+        <span class="base-map-panel-toggle__label">地図の種類</span>
+      </button>
+    </div>
     <section id="base-map-panel" class="base-map-selector" aria-labelledby="base-map-panel-title" hidden>
       <h2 id="base-map-panel-title">地図の種類</h2>
       <div id="base-map-selector" class="base-map-options"></div>
@@ -121,7 +148,7 @@ document.querySelector('#app').innerHTML = `
       </section>
     </section>
     <section id="ward-panel" class="ward-panel" aria-labelledby="ward-panel-title" hidden>
-      <h2 id="ward-panel-title">GeoJSONをえらぶ</h2>
+      <h2 id="ward-panel-title">データをえらぶ</h2>
       <label class="ward-toggle">
         <input name="geojson-layer" value="wards" type="radio" checked />
         <span>広島市の区を表示</span>
@@ -166,9 +193,44 @@ const map = createHiroshimaMap({
     document.querySelector('#map-error').hidden = false
   },
 })
+const comparisonMap = createHiroshimaMap({
+  container: 'comparison-map',
+  navigationPosition: 'top-right',
+  onError: () => {
+    document.querySelector('#map-error').hidden = false
+  },
+})
+
+synchronizeMaps(map, comparisonMap)
+
+const comparisonToggle = document.querySelector('#map-comparison-toggle')
+const mapComparison = document.querySelector('.map-comparison')
+comparisonToggle.addEventListener('click', () => {
+  const enabled = !mapComparison.classList.contains('is-single-map')
+  mapComparison.classList.toggle('is-single-map', enabled)
+  if (!enabled) {
+    document.dispatchEvent(new CustomEvent('map-panel-open', {
+      detail: { panelId: 'map-comparison' },
+    }))
+  }
+  comparisonToggle.classList.toggle('is-active', !enabled)
+  comparisonToggle.setAttribute('aria-pressed', String(!enabled))
+  comparisonToggle.querySelector('.map-comparison-toggle__label').textContent = enabled
+    ? '2画面をON'
+    : '2画面をOFF'
+  requestAnimationFrame(() => {
+    map.resize()
+    if (!enabled) comparisonMap.resize()
+  })
+})
+
+comparisonMap.once('load', () => {
+  createComparisonMapSelector(comparisonMap, document.querySelector('#right-map-type'), 'photo')
+})
 
 map.once('load', () => {
   createBaseMapSelector(map)
+  createComparisonMapSelector(map, document.querySelector('#left-map-type'), 'standard')
   createTerrainToggle(map)
   createElevationColorEditor(map)
   createBaseMapPanelToggle()

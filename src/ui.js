@@ -31,6 +31,14 @@ export function createBaseMapSelector(map) {
   })
 }
 
+export function createComparisonMapSelector(map, selector, selectedId) {
+  selector.innerHTML = BASE_MAPS.map(({ id, label }) => `
+    <option value="${id}" ${id === selectedId ? 'selected' : ''}>${label}</option>
+  `).join('')
+  selector.addEventListener('change', () => setBaseMap(map, selector.value))
+  setBaseMap(map, selectedId)
+}
+
 export function createTerrainToggle(map) {
   const toggle = document.querySelector('#terrain-toggle')
   toggle.addEventListener('change', () => {
