@@ -7,8 +7,18 @@ const MODE_HELP = {
 
 export function createDrawingPanel({ state, onMode, onDelete, onClear }) {
   const panel = document.querySelector('#drawing-panel')
+  const toggle = document.querySelector('#drawing-panel-toggle')
+  const toggleLabel = toggle.querySelector('.drawing-panel-toggle__label')
   const status = document.querySelector('#drawing-status')
   const count = document.querySelector('#drawing-count')
+
+  toggle.addEventListener('click', () => {
+    const willOpen = panel.hidden
+    panel.hidden = !willOpen
+    toggle.setAttribute('aria-expanded', String(willOpen))
+    toggle.classList.toggle('is-active', willOpen)
+    toggleLabel.textContent = willOpen ? 'とじる' : '地図にかく'
+  })
 
   panel.addEventListener('click', (event) => {
     const button = event.target.closest('button[data-action]')

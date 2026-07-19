@@ -16,7 +16,17 @@ document.querySelector('#app').innerHTML = `
   </header>
   <main class="map-area">
     <div id="map" aria-label="広島市の地図"></div>
-    <section id="drawing-panel" class="drawing-panel" aria-label="地図にかく道具">
+    <button
+      id="drawing-panel-toggle"
+      class="drawing-panel-toggle"
+      type="button"
+      aria-controls="drawing-panel"
+      aria-expanded="false"
+    >
+      <span aria-hidden="true">✎</span>
+      <span class="drawing-panel-toggle__label">地図にかく</span>
+    </button>
+    <section id="drawing-panel" class="drawing-panel" aria-label="地図にかく道具" hidden>
       <h2>地図にかいてみよう</h2>
       <div class="drawing-tools">
         <button type="button" data-action="mode" data-mode="point" aria-pressed="false" title="地図をおして、場所にしるしをつけます"><span aria-hidden="true">●</span>場所をしるす</button>
