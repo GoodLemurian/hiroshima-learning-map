@@ -57,6 +57,8 @@ async function convertGsjDem(request, abortController) {
     imageData.data[index] = r
     imageData.data[index + 1] = g
     imageData.data[index + 2] = b
+    // 透明な水域のRGBがImageBitmap生成時に黒へ変換されないよう不透明にする。
+    imageData.data[index + 3] = 255
   }
 
   context.putImageData(imageData, 0, 0)
