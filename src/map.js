@@ -93,6 +93,11 @@ export function createHiroshimaMap({ container, onError }) {
     center: HIROSHIMA_CENTER,
     zoom: 11,
     attributionControl: false,
+    // MapLibre defaults to "high-performance", which can fail to create a
+    // WebGL context on otherwise WebGL-capable integrated GPUs.
+    canvasContextAttributes: {
+      powerPreference: 'default',
+    },
   })
 
   map.addControl(
