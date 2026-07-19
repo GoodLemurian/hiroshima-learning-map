@@ -22,10 +22,11 @@ export async function createWardPopulationChart(records) {
     return
   }
 
+  const chartWidth = Math.max(240, Math.floor(container.clientWidth - 10))
   const specification = {
     $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
     description: '広島市8区の人口を比べる横棒グラフ',
-    width: 'container',
+    width: chartWidth,
     height: { step: 25 },
     data: { values },
     mark: {
@@ -62,9 +63,10 @@ export async function createWardPopulationChart(records) {
 
   try {
     const { default: vegaEmbed } = await import('vega-embed')
+    container.replaceChildren()
     await vegaEmbed(container, specification, {
       actions: false,
-      renderer: 'canvas',
+      renderer: 'svg',
     })
   } catch (error) {
     console.error('人口グラフを表示できませんでした。', error)

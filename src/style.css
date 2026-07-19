@@ -120,8 +120,11 @@ h1 {
 }
 
 .ward-population-chart .vega-embed,
-.ward-population-chart canvas {
+.ward-population-chart svg {
+  display: block;
+  width: 100%;
   max-width: 100%;
+  height: auto;
 }
 
 .ward-population-chart.is-error {
