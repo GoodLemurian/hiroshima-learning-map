@@ -69,6 +69,31 @@ body,
   height: 100%;
 }
 
+.feature-properties,
+.feature-properties * {
+  font-size: 0.875rem;
+}
+
+.feature-properties > strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.feature-properties dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 3px 10px;
+  margin: 0;
+}
+
+.feature-properties dt {
+  font-weight: 600;
+}
+
+.feature-properties dd {
+  margin: 0;
+}
+
 .map-type-select {
   position: absolute;
   top: 12px;

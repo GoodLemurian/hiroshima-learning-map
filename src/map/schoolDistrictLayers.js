@@ -6,7 +6,7 @@ const LAYER_IDS = [SCHOOL_DISTRICT_FILL_LAYER_ID, SCHOOL_DISTRICT_OUTLINE_LAYER_
 
 export function addSchoolDistrictLayers(map, data) {
   if (!map.getSource(SCHOOL_DISTRICT_SOURCE_ID)) {
-    map.addSource(SCHOOL_DISTRICT_SOURCE_ID, { type: 'geojson', data })
+    map.addSource(SCHOOL_DISTRICT_SOURCE_ID, { type: 'geojson', data, generateId: true })
   }
 
   if (!map.getLayer(SCHOOL_DISTRICT_FILL_LAYER_ID)) {
@@ -24,7 +24,24 @@ export function addSchoolDistrictLayers(map, data) {
       type: 'line',
       source: SCHOOL_DISTRICT_SOURCE_ID,
       layout: { visibility: 'none' },
-      paint: { 'line-color': '#a34f00', 'line-width': 2, 'line-opacity': 0.95 },
+      paint: {
+        'line-color': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          '#d32f2f',
+          '#d97706',
+        ],
+        'line-width': [
+          'case',
+          ['any',
+            ['boolean', ['feature-state', 'selected'], false],
+            ['boolean', ['feature-state', 'hover'], false],
+          ],
+          5,
+          2,
+        ],
+        'line-opacity': 0.95,
+      },
     })
   }
 }

@@ -22,7 +22,7 @@ export function addFireStationJurisdictionLayers(map, data) {
       layout: { visibility: 'none' },
       paint: {
         'fill-color': '#d9382c',
-        'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.3, 0.14],
+        'fill-opacity': 0.14,
       },
     })
   }
@@ -32,7 +32,24 @@ export function addFireStationJurisdictionLayers(map, data) {
       type: 'line',
       source: FIRE_STATION_JURISDICTION_SOURCE_ID,
       layout: { visibility: 'none' },
-      paint: { 'line-color': '#a9221a', 'line-width': 1.5, 'line-opacity': 0.8 },
+      paint: {
+        'line-color': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          '#d32f2f',
+          '#a9221a',
+        ],
+        'line-width': [
+          'case',
+          ['any',
+            ['boolean', ['feature-state', 'selected'], false],
+            ['boolean', ['feature-state', 'hover'], false],
+          ],
+          5,
+          1.5,
+        ],
+        'line-opacity': 0.8,
+      },
     })
   }
 }
@@ -46,6 +63,7 @@ export function setFireStationJurisdictionVisibility(map, visible) {
 export function bindFireStationJurisdictionInteractions({ map, isEnabled = () => true }) {
   const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: true, offset: 12 })
   let hoveredFeatureId = null
+  let selectedFeatureId = null
 
   const clearHover = () => {
     if (hoveredFeatureId === null) return
@@ -78,20 +96,46 @@ export function bindFireStationJurisdictionInteractions({ map, isEnabled = () =>
 
   map.on('click', FIRE_STATION_JURISDICTION_FILL_LAYER_ID, (event) => {
     if (!isEnabled()) return
-    const name = event.features?.[0]?.properties?.P17_005
+    const feature = event.features?.[0]
+    const name = feature?.properties?.P17_005
     if (!name) return
+    if (feature.id !== undefined) {
+      if (selectedFeatureId !== null) {
+        map.setFeatureState(
+          { source: FIRE_STATION_JURISDICTION_SOURCE_ID, id: selectedFeatureId },
+          { selected: false },
+        )
+      }
+      selectedFeatureId = feature.id
+      map.setFeatureState(
+        { source: FIRE_STATION_JURISDICTION_SOURCE_ID, id: selectedFeatureId },
+        { selected: true },
+      )
+    }
     const content = document.createElement('div')
+    content.className = 'feature-properties'
     const label = document.createElement('strong')
-    label.textContent = 'P17_005'
-    const value = document.createElement('div')
+    label.textContent = '消防署管轄の属性'
+    const properties = document.createElement('dl')
+    const term = document.createElement('dt')
+    term.textContent = 'P17_005'
+    const value = document.createElement('dd')
     value.textContent = String(name)
-    content.append(label, value)
+    properties.append(term, value)
+    content.append(label, properties)
     popup.setLngLat(event.lngLat).setDOMContent(content).addTo(map)
   })
 
   return {
     remove: () => {
       clearHover()
+      if (selectedFeatureId !== null) {
+        map.setFeatureState(
+          { source: FIRE_STATION_JURISDICTION_SOURCE_ID, id: selectedFeatureId },
+          { selected: false },
+        )
+        selectedFeatureId = null
+      }
       popup.remove()
     },
   }

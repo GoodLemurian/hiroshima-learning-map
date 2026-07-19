@@ -21,7 +21,7 @@ import {
   setAdministrativeAreaColors,
   WARD_FILL_LAYER_ID,
 } from './map/administrativeAreaLayers.js'
-import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
+import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, SCHOOL_DISTRICT_SOURCE_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
 import { addFireStationLayers, FIRE_STATION_LAYER_ID, setFireStationVisibility } from './map/fireStationLayers.js'
 import {
   addFireStationJurisdictionLayers,
@@ -317,6 +317,7 @@ map.once('load', () => {
         const schoolPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: SCHOOL_DISTRICT_FILL_LAYER_ID,
+          sourceId: SCHOOL_DISTRICT_SOURCE_ID,
           isEnabled: () => drawingState.getState().mode === 'select',
           describeFeature: (feature) => {
             const properties = Object.entries(feature?.properties || {})

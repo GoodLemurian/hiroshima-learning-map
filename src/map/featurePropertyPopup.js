@@ -17,14 +17,46 @@ function createPopupContent(title, properties) {
   return container
 }
 
-export function bindFeaturePropertyPopup({ map, layerId, describeFeature, isEnabled = () => true }) {
-  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
+export function bindFeaturePropertyPopup({
+  map,
+  layerId,
+  sourceId,
+  describeFeature,
+  isEnabled = () => true,
+}) {
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: true, offset: 12 })
+  let hoveredFeatureId = null
+  let selectedFeatureId = null
+
+  const clearHover = () => {
+    if (!sourceId || hoveredFeatureId === null) return
+    map.setFeatureState({ source: sourceId, id: hoveredFeatureId }, { hover: false })
+    hoveredFeatureId = null
+  }
 
   map.on('mousemove', layerId, (event) => {
     if (!isEnabled()) return
-    const description = describeFeature(event.features?.[0])
-    if (!description) return
+    const feature = event.features?.[0]
     map.getCanvas().style.cursor = 'pointer'
+
+    if (sourceId && feature?.id !== undefined && hoveredFeatureId !== feature.id) {
+      clearHover()
+      hoveredFeatureId = feature.id
+      map.setFeatureState({ source: sourceId, id: hoveredFeatureId }, { hover: true })
+    }
+  })
+  map.on('click', layerId, (event) => {
+    if (!isEnabled()) return
+    const feature = event.features?.[0]
+    const description = describeFeature(feature)
+    if (!description) return
+    if (sourceId && feature?.id !== undefined) {
+      if (selectedFeatureId !== null) {
+        map.setFeatureState({ source: sourceId, id: selectedFeatureId }, { selected: false })
+      }
+      selectedFeatureId = feature.id
+      map.setFeatureState({ source: sourceId, id: selectedFeatureId }, { selected: true })
+    }
     popup
       .setLngLat(event.lngLat)
       .setDOMContent(createPopupContent(description.title, description.properties))
@@ -32,8 +64,17 @@ export function bindFeaturePropertyPopup({ map, layerId, describeFeature, isEnab
   })
   map.on('mouseleave', layerId, () => {
     map.getCanvas().style.cursor = ''
-    popup.remove()
+    clearHover()
   })
 
-  return { remove: () => popup.remove() }
+  return {
+    remove: () => {
+      clearHover()
+      if (sourceId && selectedFeatureId !== null) {
+        map.setFeatureState({ source: sourceId, id: selectedFeatureId }, { selected: false })
+        selectedFeatureId = null
+      }
+      popup.remove()
+    },
+  }
 }

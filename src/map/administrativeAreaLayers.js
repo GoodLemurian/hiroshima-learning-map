@@ -37,7 +37,7 @@ export function addAdministrativeAreaLayers(map, data) {
       type: 'line',
       source: WARD_SOURCE_ID,
       filter: emptyHighlight(),
-      paint: { 'line-color': '#c74600', 'line-width': 5, 'line-opacity': 1 },
+      paint: { 'line-color': '#145846', 'line-width': 5, 'line-opacity': 1 },
     })
   }
   if (!map.getLayer(WARD_SELECTION_LAYER_ID)) {
@@ -46,7 +46,7 @@ export function addAdministrativeAreaLayers(map, data) {
       type: 'line',
       source: WARD_SOURCE_ID,
       filter: emptyHighlight(),
-      paint: { 'line-color': '#5b238a', 'line-width': 4, 'line-opacity': 1 },
+      paint: { 'line-color': '#d32f2f', 'line-width': 5, 'line-opacity': 1 },
     })
   }
 }
