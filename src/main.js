@@ -72,6 +72,16 @@ document.querySelector('#app').innerHTML = `
     </div>
     <div class="map-action-buttons">
       <button
+        id="initial-view-reset"
+        class="initial-view-reset"
+        type="button"
+        aria-label="表示をリセット"
+        title="地図を最初の位置と大きさに戻します"
+      >
+        <span aria-hidden="true">↺</span>
+        <span class="initial-view-reset__label">表示をリセット</span>
+      </button>
+      <button
         id="map-comparison-toggle"
         class="map-comparison-toggle"
         type="button"
@@ -231,6 +241,13 @@ const comparisonMap = createHiroshimaMap({
 })
 
 synchronizeMaps(map, comparisonMap)
+
+let resetInitialView = () => {
+  map.easeTo({ center: [132.4553, 34.3853], zoom: 11, bearing: 0, pitch: 0, duration: 800 })
+}
+document.querySelector('#initial-view-reset').addEventListener('click', () => {
+  resetInitialView()
+})
 
 const comparisonToggle = document.querySelector('#map-comparison-toggle')
 const mapComparison = document.querySelector('.map-comparison')
@@ -455,7 +472,8 @@ map.once('load', () => {
             updateStatistic(selectedStatistic)
           }
         })
-        fitAdministrativeAreas(map, joined.featureCollection)
+        resetInitialView = () => fitAdministrativeAreas(map, joined.featureCollection)
+        resetInitialView()
       } catch (error) {
         console.error('広島市の行政区レイヤーを追加できませんでした。', error)
         showWardStatisticsChartError()

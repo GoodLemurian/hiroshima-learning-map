@@ -516,7 +516,8 @@ body,
 
 .map-comparison-toggle,
 .base-map-panel-toggle,
-.drawing-panel-toggle {
+.drawing-panel-toggle,
+.initial-view-reset {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -538,21 +539,24 @@ body,
 .base-map-panel-toggle:hover,
 .base-map-panel-toggle.is-active,
 .drawing-panel-toggle:hover,
-.drawing-panel-toggle.is-active {
+.drawing-panel-toggle.is-active,
+.initial-view-reset:hover {
   color: #fff;
   background: #176b55;
 }
 
 .map-comparison-toggle:focus-visible,
 .base-map-panel-toggle:focus-visible,
-.drawing-panel-toggle:focus-visible {
+.drawing-panel-toggle:focus-visible,
+.initial-view-reset:focus-visible {
   outline: 4px solid #f2a900;
   outline-offset: 2px;
 }
 
 .map-comparison-toggle > span[aria-hidden],
 .base-map-panel-toggle > span[aria-hidden],
-.drawing-panel-toggle > span[aria-hidden] {
+.drawing-panel-toggle > span[aria-hidden],
+.initial-view-reset > span[aria-hidden] {
   font-size: 1.3rem;
 }
 
@@ -889,14 +893,24 @@ body,
 
   .map-comparison-toggle,
   .base-map-panel-toggle,
-  .drawing-panel-toggle {
+  .drawing-panel-toggle,
+  .initial-view-reset {
     padding-inline: 9px;
     font-size: 0.78rem;
   }
 
   .map-comparison-toggle > span[aria-hidden],
   .base-map-panel-toggle > span[aria-hidden],
-  .drawing-panel-toggle > span[aria-hidden] {
+  .drawing-panel-toggle > span[aria-hidden],
+  .initial-view-reset > span[aria-hidden] {
+    display: none;
+  }
+
+  .initial-view-reset > span[aria-hidden] {
+    display: inline;
+  }
+
+  .initial-view-reset__label {
     display: none;
   }
 
