@@ -29,19 +29,19 @@ import {
   WARD_FILL_LAYER_ID,
   WARD_NO_STATISTIC_FILL_OPACITY,
 } from './map/administrativeAreaLayers.js'
-import { addSchoolDistrictLayers, SCHOOL_DISTRICT_DEFAULT_FILL_COLOR, SCHOOL_DISTRICT_FILL_LAYER_ID, SCHOOL_DISTRICT_SOURCE_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
+import { addSchoolDistrictLayers, SCHOOL_DISTRICT_DEFAULT_FILL_COLOR, SCHOOL_DISTRICT_HIGHLIGHT_LAYER_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
 import { addSchoolLocationLayers, SCHOOL_LOCATION_LAYER_ID, setSchoolLocationVisibility } from './map/schoolLocationLayers.js'
 import { addFireStationLayers, FIRE_STATION_LAYER_ID, setFireStationVisibility } from './map/fireStationLayers.js'
 import {
   addFireStationJurisdictionLayers,
-  bindFireStationJurisdictionInteractions,
+  FIRE_STATION_JURISDICTION_HIGHLIGHT_LAYER_ID,
   setFireStationJurisdictionVisibility,
 } from './map/fireStationJurisdictionLayers.js'
 import { bindFeaturePropertyPopup } from './map/featurePropertyPopup.js'
+import { bindPointPolygonHover } from './map/pointPolygonHover.js'
 import {
   addPoliceStationLayers,
-  POLICE_JURISDICTION_FILL_LAYER_ID,
-  POLICE_JURISDICTION_SOURCE_ID,
+  POLICE_JURISDICTION_HIGHLIGHT_LAYER_ID,
   POLICE_STATION_LAYER_ID,
   setPoliceStationVisibility,
 } from './map/policeStationLayers.js'
@@ -193,7 +193,7 @@ document.querySelector('#app').innerHTML = `
       </label>
       <label class="ward-toggle">
         <input name="geojson-layer" value="school-districts" type="radio" />
-        <span>小学校区を表示</span>
+        <span>小学校を表示</span>
       </label>
       <label class="ward-toggle">
         <input name="geojson-layer" value="fire-stations" type="radio" />
@@ -390,46 +390,42 @@ map.once('load', () => {
             }
           },
         })
-        const schoolPropertyPopup = bindFeaturePropertyPopup({
-          map,
-          layerId: SCHOOL_DISTRICT_FILL_LAYER_ID,
-          sourceId: SCHOOL_DISTRICT_SOURCE_ID,
-          isEnabled: () => !isDrawingPanelOpen(),
-          describeFeature: (feature) => {
-            const properties = Object.entries(feature?.properties || {})
-              .filter(([, value]) => value !== null && value !== '')
-              .map(([label, value]) => ({ label, value: String(value) }))
-            return properties.length ? { title: '小学校区の属性', properties } : null
-          },
-        })
         const schoolLocationPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: SCHOOL_LOCATION_LAYER_ID,
           isEnabled: () => !isDrawingPanelOpen(),
           describeFeature: (feature) => {
-            const properties = Object.entries(feature?.properties || {})
-              .filter(([, value]) => value !== null && value !== '')
-              .map(([label, value]) => ({ label, value: String(value) }))
-            return properties.length
-              ? { title: feature.properties?.['名称'] || '学校', properties }
-              : null
+            const name = feature?.properties?.['名称']
+            return name ? { title: String(name), properties: [] } : null
           },
+        })
+        const schoolDistrictHover = bindPointPolygonHover({
+          map,
+          pointLayerId: SCHOOL_LOCATION_LAYER_ID,
+          polygonHighlightLayerId: SCHOOL_DISTRICT_HIGHLIGHT_LAYER_ID,
+          polygonProperty: '名称',
+          polygonFeatures: schoolDistricts.features,
+          getPointName: (feature) => feature?.properties?.['名称'],
+          normalizeName: (name) => String(name || '').replace(/小学校$/, '小').trim(),
+          isEnabled: () => !isDrawingPanelOpen(),
         })
         const fireStationPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: FIRE_STATION_LAYER_ID,
           isEnabled: () => !isDrawingPanelOpen(),
           describeFeature: (feature) => {
-            const properties = Object.entries(feature?.properties || {})
-              .filter(([, value]) => value !== null && value !== '')
-              .map(([label, value]) => ({ label, value: String(value) }))
-            return properties.length
-              ? { title: feature.properties?.['名称'] || '消防署所', properties }
-              : null
+            const name = feature?.properties?.['名称']
+            return name ? { title: String(name), properties: [] } : null
           },
         })
-        const fireStationJurisdictionInteractions = bindFireStationJurisdictionInteractions({
+        const fireStationJurisdictionHover = bindPointPolygonHover({
           map,
+          pointLayerId: FIRE_STATION_LAYER_ID,
+          polygonHighlightLayerId: FIRE_STATION_JURISDICTION_HIGHLIGHT_LAYER_ID,
+          polygonProperty: 'P17_005',
+          polygonFeatures: fireStationJurisdictions.features,
+          getPointName: (feature) => feature?.properties?.P17_005 || feature?.properties?.['名称'],
+          normalizeName: (name) => String(name || '').replace(/^広島市消防局/, '').trim(),
           isEnabled: () => !isDrawingPanelOpen(),
         })
         const policeStationPropertyPopup = bindFeaturePropertyPopup({
@@ -437,27 +433,18 @@ map.once('load', () => {
           layerId: POLICE_STATION_LAYER_ID,
           isEnabled: () => !isDrawingPanelOpen(),
           describeFeature: (feature) => {
-            const properties = Object.entries(feature?.properties || {})
-              .filter(([, value]) => value !== null && value !== '')
-              .map(([label, value]) => ({ label, value: String(value) }))
-            return properties.length
-              ? { title: feature.properties?.P18_001 || '警察署・交番', properties }
-              : null
+            const name = feature?.properties?.P18_001
+            return name ? { title: String(name), properties: [] } : null
           },
         })
-        const policeJurisdictionPropertyPopup = bindFeaturePropertyPopup({
+        const policeJurisdictionHover = bindPointPolygonHover({
           map,
-          layerId: POLICE_JURISDICTION_FILL_LAYER_ID,
-          sourceId: POLICE_JURISDICTION_SOURCE_ID,
+          pointLayerId: POLICE_STATION_LAYER_ID,
+          polygonHighlightLayerId: POLICE_JURISDICTION_HIGHLIGHT_LAYER_ID,
+          polygonProperty: 'P18_005',
+          polygonFeatures: policeStationJurisdictions.features,
+          getPointName: (feature) => feature?.properties?.P18_005 || feature?.properties?.P18_001,
           isEnabled: () => !isDrawingPanelOpen(),
-          describeFeature: (feature) => {
-            const properties = Object.entries(feature?.properties || {})
-              .filter(([, value]) => value !== null && value !== '')
-              .map(([label, value]) => ({ label, value: String(value) }))
-            return properties.length
-              ? { title: feature.properties?.P18_005 || '警察署管轄区域', properties }
-              : null
-          },
         })
         createAdministrativeAreaToggle((nextLayer) => {
           const wardsVisible = nextLayer === 'wards'
@@ -470,16 +457,16 @@ map.once('load', () => {
           activeLayer = nextLayer
           if (!wardsVisible) wardPropertyPopup.remove()
           if (!schoolsVisible) {
-            schoolPropertyPopup.remove()
             schoolLocationPropertyPopup.remove()
+            schoolDistrictHover.remove()
           }
           if (!fireStationsVisible) {
             fireStationPropertyPopup.remove()
-            fireStationJurisdictionInteractions.remove()
+            fireStationJurisdictionHover.remove()
           }
           if (!policeStationsVisible) {
             policeStationPropertyPopup.remove()
-            policeJurisdictionPropertyPopup.remove()
+            policeJurisdictionHover.remove()
           }
           wardInteractions.setVisible(wardsVisible)
           setSchoolDistrictVisibility(map, schoolsVisible)

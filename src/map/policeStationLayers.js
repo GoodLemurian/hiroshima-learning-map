@@ -3,10 +3,12 @@ export const POLICE_STATION_LAYER_ID = 'hiroshima-police-stations'
 export const POLICE_JURISDICTION_SOURCE_ID = 'hiroshima-police-jurisdictions-source'
 export const POLICE_JURISDICTION_FILL_LAYER_ID = 'hiroshima-police-jurisdictions-fill'
 export const POLICE_JURISDICTION_OUTLINE_LAYER_ID = 'hiroshima-police-jurisdictions-outline'
+export const POLICE_JURISDICTION_HIGHLIGHT_LAYER_ID = 'hiroshima-police-jurisdictions-highlight'
 
 const LAYER_IDS = [
   POLICE_JURISDICTION_FILL_LAYER_ID,
   POLICE_JURISDICTION_OUTLINE_LAYER_ID,
+  POLICE_JURISDICTION_HIGHLIGHT_LAYER_ID,
   POLICE_STATION_LAYER_ID,
 ]
 
@@ -33,24 +35,17 @@ export function addPoliceStationLayers(map, stations, jurisdictions) {
       type: 'line',
       source: POLICE_JURISDICTION_SOURCE_ID,
       layout: { visibility: 'none' },
-      paint: {
-        'line-color': [
-          'case',
-          ['boolean', ['feature-state', 'selected'], false],
-          '#dc2626',
-          '#1d4ed8',
-        ],
-        'line-width': [
-          'case',
-          ['any',
-            ['boolean', ['feature-state', 'selected'], false],
-            ['boolean', ['feature-state', 'hover'], false],
-          ],
-          5,
-          1.5,
-        ],
-        'line-opacity': 0.85,
-      },
+      paint: { 'line-color': '#1d4ed8', 'line-width': 1.5, 'line-opacity': 0.85 },
+    })
+  }
+  if (!map.getLayer(POLICE_JURISDICTION_HIGHLIGHT_LAYER_ID)) {
+    map.addLayer({
+      id: POLICE_JURISDICTION_HIGHLIGHT_LAYER_ID,
+      type: 'line',
+      source: POLICE_JURISDICTION_SOURCE_ID,
+      layout: { visibility: 'none' },
+      filter: ['==', ['get', 'P18_005'], ''],
+      paint: { 'line-color': '#1d4ed8', 'line-width': 5, 'line-opacity': 1 },
     })
   }
 
