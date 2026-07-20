@@ -11,6 +11,9 @@ export function createDrawingPanel({
   onMode,
   onDelete,
   onClear,
+  onExport,
+  onImport,
+  onImportError,
   onVisibilityChange,
 }) {
   const panel = document.querySelector('#drawing-panel')
@@ -19,6 +22,8 @@ export function createDrawingPanel({
   const status = document.querySelector('#drawing-status')
   const count = document.querySelector('#drawing-count')
   const deleteButton = panel.querySelector('[data-action="delete"]')
+  const exportButton = panel.querySelector('[data-action="export"]')
+  const importInput = panel.querySelector('#drawing-import-input')
 
   const setOpen = (willOpen) => {
     const wasOpen = !panel.hidden
@@ -50,6 +55,21 @@ export function createDrawingPanel({
     if (action === 'mode') onMode(mode)
     if (action === 'delete') onDelete()
     if (action === 'clear') onClear()
+    if (action === 'export') onExport()
+    if (action === 'import') importInput.click()
+  })
+
+  importInput.addEventListener('change', async () => {
+    const [file] = importInput.files
+    importInput.value = ''
+    if (!file) return
+
+    try {
+      await onImport(await file.text())
+    } catch (error) {
+      console.error('作図ファイルを読み込めませんでした。', error)
+      onImportError()
+    }
   })
 
   return state.subscribe(({ mode, selectedFeatureId, count: featureCount }) => {
@@ -60,6 +80,7 @@ export function createDrawingPanel({
     })
     count.textContent = `かいたもの：${featureCount}こ`
     deleteButton.disabled = mode !== 'select' || featureCount === 0
+    exportButton.disabled = featureCount === 0
     document.querySelector('[data-action="clear"]').disabled = featureCount === 0
     status.textContent = selectedFeatureId
       ? 'えらびました。動かして直すか、「けす」をおせます。'

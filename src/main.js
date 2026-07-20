@@ -3,6 +3,7 @@ import './style.css'
 import { createHiroshimaMap, synchronizeMaps } from './map.js'
 import { createBaseMapSelector, createComparisonMapSelector, createElevationColorEditor, createTerrainToggle } from './ui.js'
 import { createDrawControl } from './drawing/createDrawControl.js'
+import { downloadDrawingGeoJson, parseDrawingGeoJson } from './drawing/drawingGeoJson.js'
 import { createDrawingState } from './drawing/drawingState.js'
 import { createDrawingPanel } from './ui/drawingPanel.js'
 import { createMeasurementPanel } from './ui/measurementPanel.js'
@@ -100,13 +101,21 @@ document.querySelector('#app').innerHTML = `
         <button type="button" data-action="mode" data-mode="select" aria-pressed="true" title="かいたものをえらんで、動かしたり形を直したりします"><span aria-hidden="true">☝</span>えらんで直す</button>
         <button type="button" class="drawing-button--danger" data-action="delete" title="えらんだものをけします" disabled><span aria-hidden="true">×</span>けす</button>
         <button type="button" class="drawing-button--danger" data-action="clear" title="かいたものを全部けします" disabled><span aria-hidden="true">⌫</span>全部けす</button>
+        <button type="button" data-action="export" title="かいたものをGeoJSONファイルに保存します" disabled><span aria-hidden="true">↓</span>ファイルに保存</button>
+        <button type="button" data-action="import" title="GeoJSONファイルから図形を読みこみます"><span aria-hidden="true">↑</span>ファイルを読みこむ</button>
+        <input id="drawing-import-input" class="drawing-file-input" type="file" accept=".geojson,.json,application/geo+json,application/json" />
       </div>
       <p id="drawing-count" class="drawing-count" aria-live="polite">かいたもの：0こ</p>
       <p id="drawing-status" class="drawing-status">かいたものをえらぶと、動かしたり形を直したりできます。</p>
       <section class="measurement-panel" aria-labelledby="measurement-title">
-        <h3 id="measurement-title">はかった結果</h3>
-        <p id="measurement-result" aria-live="polite">図形をえらぶと、長さや広さが分かります</p>
-        <p class="measurement-note">※ 長さや広さはおよその値です</p>
+        <div class="measurement-panel__header">
+          <h3 id="measurement-title">はかった結果</h3>
+          <button id="measurement-toggle" type="button" aria-controls="measurement-content" aria-expanded="true">かくす</button>
+        </div>
+        <div id="measurement-content">
+          <p id="measurement-result" aria-live="polite">図形をえらぶと、長さや広さが分かります</p>
+          <p class="measurement-note">※ 長さや広さはおよその値です</p>
+        </div>
       </section>
     </section>
     <div class="map-left-action-buttons">
@@ -475,6 +484,27 @@ map.once('load', () => {
       drawing.setMode(mode)
     },
     onDelete: drawing.deleteSelected,
+    onExport: () => {
+      try {
+        downloadDrawingGeoJson(drawing.getDrawnFeatureCollection())
+        showDrawingMessage('かいたものをファイルに保存しました。')
+      } catch (error) {
+        console.error('作図ファイルを保存できませんでした。', error)
+        showDrawingMessage('ファイルに保存できませんでした。', true)
+      }
+    },
+    onImport: (text) => {
+      try {
+        return drawing.importFeatureCollection(parseDrawingGeoJson(text))
+      } catch (error) {
+        console.error('GeoJSONファイルを読み込めませんでした。', error)
+        showDrawingMessage('GeoJSONのファイルをえらんでください。', true)
+        return false
+      }
+    },
+    onImportError: () => {
+      showDrawingMessage('ファイルを読みこめませんでした。', true)
+    },
     onVisibilityChange: drawing.setPanelOpen,
     onClear: () => {
       if (

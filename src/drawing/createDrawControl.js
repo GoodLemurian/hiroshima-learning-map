@@ -1,5 +1,6 @@
 import { MaplibreTerradrawControl } from '@watergis/maplibre-gl-terradraw'
 import '@watergis/maplibre-gl-terradraw/dist/maplibre-gl-terradraw.css'
+import { prepareDrawingFeatures } from './drawingGeoJson.js'
 
 const DRAW_MODES = new Set(['point', 'linestring', 'polygon', 'select'])
 const DRAW_LAYER_IDS = [
@@ -171,6 +172,40 @@ export function createDrawControl({ map, state, onMessage }) {
     }
   }
 
+  const importFeatureCollection = (featureCollection) => {
+    try {
+      if (!terraDraw.enabled) control.activate()
+      const prepared = prepareDrawingFeatures(
+        featureCollection,
+        () => terraDraw.getFeatureId(),
+      )
+      if (prepared.features.length === 0) {
+        onMessage('読みこめる場所・道・かこんだ場所がありません。', true)
+        return false
+      }
+
+      const results = terraDraw.addFeatures(prepared.features)
+      const importedCount = results.filter(({ valid }) => valid).length
+      const skippedCount = prepared.skippedCount + results.length - importedCount
+      state.resetSelection()
+      syncFeatures()
+      scheduleDrawLayersToFront()
+
+      if (importedCount === 0) {
+        onMessage('このファイルの図形は読みこめませんでした。', true)
+        return false
+      }
+
+      const skippedText = skippedCount > 0 ? `（${skippedCount}こは読みこめませんでした）` : ''
+      onMessage(`${importedCount}この図形を読みこみました。${skippedText}`)
+      return true
+    } catch (error) {
+      console.error('GeoJSONを読み込めませんでした。', error)
+      onMessage('ファイルを読みこめませんでした。', true)
+      return false
+    }
+  }
+
   const setPanelOpen = (isOpen) => {
     try {
       if (!terraDraw.enabled) control.activate()
@@ -204,6 +239,7 @@ export function createDrawControl({ map, state, onMessage }) {
     setPanelOpen,
     deleteSelected,
     clearAll,
+    importFeatureCollection,
     getDrawnFeatureCollection,
   }
 }
