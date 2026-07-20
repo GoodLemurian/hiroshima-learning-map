@@ -71,6 +71,16 @@ export const BASE_MAPS = [
     category: '写真',
     tiles: [`https://cyberjapandata.gsi.go.jp/xyz/${tile}/{z}/{x}/{y}.${tile === 'ort_old10' ? 'png' : 'jpg'}`],
   })),
+  ...[
+    ['land-use-1970', '1970年ごろの土地利用', 'landuseclassification2'],
+    ['land-use-1890', '1890年ごろの土地利用', 'landuseclassification1'],
+  ].map(([id, label, tile]) => ({
+    id,
+    label,
+    category: '土地利用',
+    tiles: [`https://nlftp.mlit.go.jp/kokjo/inspect/tile/landclassification/land_history/landuseclassification/${tile}/{z}/{x}/{y}.png`],
+    attribution: '国土交通省 土地分類調査',
+  })),
 ]
 
 const baseMapLayerId = (id, index) => `gsi-${id}-${index}-layer`
