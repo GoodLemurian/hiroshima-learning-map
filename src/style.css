@@ -830,6 +830,40 @@ body,
   z-index: 2;
 }
 
+.error-message[hidden] {
+  display: none;
+}
+
+.error-message button {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid #b3261e;
+  border-radius: 6px;
+  color: #7a1711;
+  background: #fff;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.error-message button:hover {
+  background: #ffe3df;
+}
+
+.error-message button:focus-visible {
+  outline: 3px solid #f2a900;
+  outline-offset: 2px;
+}
+
 @media (max-width: 640px) {
   .map-left-action-buttons {
     gap: 5px;

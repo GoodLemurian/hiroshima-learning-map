@@ -205,11 +205,16 @@ document.querySelector('#app').innerHTML = `
         </div>
       </section>
     </section>
-    <p id="map-error" class="error-message" role="alert" hidden>
-      地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。
-    </p>
+    <div id="map-error" class="error-message" role="alert" hidden>
+      <span>地図を読みこめませんでした。通信環境を確認して、もう一度ページを開いてください。</span>
+      <button id="map-error-close" type="button" aria-label="エラーメッセージを閉じる">×</button>
+    </div>
   </main>
 `
+
+document.querySelector('#map-error-close').addEventListener('click', () => {
+  document.querySelector('#map-error').hidden = true
+})
 
 const map = createHiroshimaMap({
   container: 'map',
