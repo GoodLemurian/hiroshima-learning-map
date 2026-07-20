@@ -1,6 +1,7 @@
 export const SCHOOL_DISTRICT_SOURCE_ID = 'hiroshima-school-districts-source'
 export const SCHOOL_DISTRICT_FILL_LAYER_ID = 'hiroshima-school-districts-fill'
 export const SCHOOL_DISTRICT_OUTLINE_LAYER_ID = 'hiroshima-school-districts-outline'
+export const SCHOOL_DISTRICT_DEFAULT_FILL_COLOR = '#f2a900'
 
 const LAYER_IDS = [SCHOOL_DISTRICT_FILL_LAYER_ID, SCHOOL_DISTRICT_OUTLINE_LAYER_ID]
 
@@ -15,7 +16,7 @@ export function addSchoolDistrictLayers(map, data) {
       type: 'fill',
       source: SCHOOL_DISTRICT_SOURCE_ID,
       layout: { visibility: 'none' },
-      paint: { 'fill-color': '#f2a900', 'fill-opacity': 0.2 },
+      paint: { 'fill-color': SCHOOL_DISTRICT_DEFAULT_FILL_COLOR, 'fill-opacity': 0.2 },
     })
   }
   if (!map.getLayer(SCHOOL_DISTRICT_OUTLINE_LAYER_ID)) {

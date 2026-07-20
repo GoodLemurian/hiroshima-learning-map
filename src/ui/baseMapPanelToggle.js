@@ -9,7 +9,7 @@ export function createBaseMapPanelToggle() {
     panel.hidden = !open
     toggle.setAttribute('aria-expanded', String(open))
     toggle.classList.toggle('is-active', open)
-    label.textContent = open ? 'とじる' : '地図の種類'
+    label.textContent = open ? 'とじる' : '地図をえらぶ'
   }
 
   toggle.addEventListener('click', () => {

@@ -5,6 +5,9 @@ export const WARD_FILL_LAYER_ID = 'hiroshima-wards-fill'
 export const WARD_OUTLINE_LAYER_ID = 'hiroshima-wards-outline'
 export const WARD_HIGHLIGHT_LAYER_ID = 'hiroshima-wards-highlight'
 export const WARD_SELECTION_LAYER_ID = 'hiroshima-wards-selection'
+export const WARD_DEFAULT_FILL_COLOR = '#b8b8b8'
+export const WARD_DEFAULT_FILL_OPACITY = 0.72
+export const WARD_NO_STATISTIC_FILL_OPACITY = 0.3
 
 const LAYER_IDS = [WARD_FILL_LAYER_ID, WARD_OUTLINE_LAYER_ID, WARD_HIGHLIGHT_LAYER_ID, WARD_SELECTION_LAYER_ID]
 const emptyHighlight = () => ['==', ['get', 'N03_007'], '']
@@ -20,7 +23,7 @@ export function addAdministrativeAreaLayers(map, data) {
       id: WARD_FILL_LAYER_ID,
       type: 'fill',
       source: WARD_SOURCE_ID,
-      paint: { 'fill-color': '#b8b8b8', 'fill-opacity': 0.72 },
+      paint: { 'fill-color': WARD_DEFAULT_FILL_COLOR, 'fill-opacity': WARD_DEFAULT_FILL_OPACITY },
     })
   }
   if (!map.getLayer(WARD_OUTLINE_LAYER_ID)) {
@@ -53,6 +56,10 @@ export function addAdministrativeAreaLayers(map, data) {
 
 export function setAdministrativeAreaColors(map, expression) {
   if (map.getLayer(WARD_FILL_LAYER_ID)) map.setPaintProperty(WARD_FILL_LAYER_ID, 'fill-color', expression)
+}
+
+export function setAdministrativeAreaOpacity(map, opacity) {
+  if (map.getLayer(WARD_FILL_LAYER_ID)) map.setPaintProperty(WARD_FILL_LAYER_ID, 'fill-opacity', opacity)
 }
 
 export function fitAdministrativeAreas(map, featureCollection) {

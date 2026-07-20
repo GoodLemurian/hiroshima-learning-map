@@ -23,9 +23,13 @@ import {
   bindAdministrativeAreaInteractions,
   fitAdministrativeAreas,
   setAdministrativeAreaColors,
+  setAdministrativeAreaOpacity,
+  WARD_DEFAULT_FILL_COLOR,
+  WARD_DEFAULT_FILL_OPACITY,
   WARD_FILL_LAYER_ID,
+  WARD_NO_STATISTIC_FILL_OPACITY,
 } from './map/administrativeAreaLayers.js'
-import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, SCHOOL_DISTRICT_SOURCE_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
+import { addSchoolDistrictLayers, SCHOOL_DISTRICT_DEFAULT_FILL_COLOR, SCHOOL_DISTRICT_FILL_LAYER_ID, SCHOOL_DISTRICT_SOURCE_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
 import { addSchoolLocationLayers, SCHOOL_LOCATION_LAYER_ID, setSchoolLocationVisibility } from './map/schoolLocationLayers.js'
 import { addFireStationLayers, FIRE_STATION_LAYER_ID, setFireStationVisibility } from './map/fireStationLayers.js'
 import {
@@ -42,7 +46,7 @@ import {
   setPoliceStationVisibility,
 } from './map/policeStationLayers.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
-import { createStatisticSelector } from './ui/statisticSelector.js'
+import { createStatisticSelector, NO_STATISTIC_KEY } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
 import { createWardPanelToggle } from './ui/wardPanelToggle.js'
 import { createBaseMapPanelToggle } from './ui/baseMapPanelToggle.js'
@@ -147,11 +151,11 @@ document.querySelector('#app').innerHTML = `
         aria-expanded="false"
       >
         <span aria-hidden="true">▧</span>
-        <span class="base-map-panel-toggle__label">地図の種類</span>
+        <span class="base-map-panel-toggle__label">地図をえらぶ</span>
       </button>
     </div>
     <section id="base-map-panel" class="base-map-selector" aria-labelledby="base-map-panel-title" hidden>
-      <h2 id="base-map-panel-title">地図の種類</h2>
+      <h2 id="base-map-panel-title">地図をえらぶ</h2>
       <div id="base-map-selector" class="base-map-options"></div>
       <section class="base-map-group terrain-group" aria-labelledby="terrain-group-title">
         <h3 id="terrain-group-title">地形</h3>
@@ -180,7 +184,11 @@ document.querySelector('#app').innerHTML = `
     <section id="ward-panel" class="ward-panel" aria-labelledby="ward-panel-title" hidden>
       <h2 id="ward-panel-title">データをえらぶ</h2>
       <label class="ward-toggle">
-        <input name="geojson-layer" value="wards" type="radio" checked />
+        <input name="geojson-layer" value="none" type="radio" checked />
+        <span>なし</span>
+      </label>
+      <label class="ward-toggle">
+        <input name="geojson-layer" value="wards" type="radio" />
         <span>広島市の区を表示</span>
       </label>
       <label class="ward-toggle">
@@ -193,18 +201,14 @@ document.querySelector('#app').innerHTML = `
       </label>
       <label class="ward-toggle">
         <input name="geojson-layer" value="police-stations" type="radio" />
-        <span>警察署・交番を表示</span>
+        <span>けいさつ署・交番を表示</span>
       </label>
-      <label class="ward-toggle">
-        <input name="geojson-layer" value="none" type="radio" />
-        <span>なし</span>
-      </label>
-      <label class="statistic-control" for="statistic-selector">
+      <label class="statistic-control" for="statistic-selector" hidden>
         <span>色分けするもの</span>
         <select id="statistic-selector"></select>
       </label>
-      <section id="choropleth-legend" class="choropleth-legend" aria-label="色分けの説明"></section>
-      <button id="chart-toggle" class="chart-toggle" type="button" aria-controls="chart-panel" aria-expanded="false">
+      <section id="choropleth-legend" class="choropleth-legend" aria-label="色分けの説明" hidden></section>
+      <button id="chart-toggle" class="chart-toggle" type="button" aria-controls="chart-panel" aria-expanded="false" hidden>
         グラフを表示する
       </button>
       <section id="chart-panel" class="chart-panel" aria-labelledby="chart-panel-title" hidden>
@@ -310,12 +314,23 @@ map.once('load', () => {
         addFireStationLayers(map, fireStations)
         addPoliceStationLayers(map, policeStations, policeStationJurisdictions)
         const schoolDefinitions = findNumericPropertyDefinitions(schoolDistricts)
-        let activeLayer = 'wards'
-        let selectedStatistic = DEFAULT_STATISTIC
-        const initialDefinition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
+        let activeLayer = 'none'
+        let selectedStatistic = NO_STATISTIC_KEY
+        const initialDefinition = { ...statisticDefinitions[DEFAULT_STATISTIC], key: DEFAULT_STATISTIC }
         const chart = createWardStatisticsChart(records, initialDefinition)
         const updateStatistic = (key) => {
           selectedStatistic = key
+          if (key === NO_STATISTIC_KEY) {
+            if (activeLayer === 'wards') {
+              setAdministrativeAreaColors(map, WARD_DEFAULT_FILL_COLOR)
+              setAdministrativeAreaOpacity(map, WARD_NO_STATISTIC_FILL_OPACITY)
+            } else {
+              setSchoolDistrictColors(map, SCHOOL_DISTRICT_DEFAULT_FILL_COLOR)
+            }
+            legend.setVisible(false)
+            chartToggle.setVisible(false)
+            return
+          }
           const definitions = activeLayer === 'wards' ? statisticDefinitions : schoolDefinitions
           const definition = { ...definitions[key], key }
           const values = activeLayer === 'wards'
@@ -324,11 +339,14 @@ map.once('load', () => {
           const scale = createChoroplethScale(values, definition.property)
           if (activeLayer === 'wards') {
             setAdministrativeAreaColors(map, scale.expression)
+            setAdministrativeAreaOpacity(map, WARD_DEFAULT_FILL_OPACITY)
             chart.setStatistic(definition)
           } else {
             setSchoolDistrictColors(map, scale.expression)
           }
           legend.update(definition, scale)
+          legend.setVisible(true)
+          chartToggle.setVisible(activeLayer === 'wards')
         }
         const statisticSelector = createStatisticSelector(statisticDefinitions, selectedStatistic, updateStatistic)
         updateStatistic(selectedStatistic)
@@ -352,17 +370,23 @@ map.once('load', () => {
           isEnabled: () => !isDrawingPanelOpen(),
           describeFeature: (feature) => {
             const code = feature?.properties?.N03_007
-            const definition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
             if (!code) return null
+            const properties = [
+              { label: '都道府県', value: feature.properties.N03_001 || '—' },
+              { label: '市', value: feature.properties.N03_004 || '—' },
+              { label: '区', value: feature.properties.N03_005 || '—' },
+              { label: '地域コード', value: code },
+            ]
+            if (selectedStatistic !== NO_STATISTIC_KEY) {
+              const definition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
+              properties.push({
+                label: definition.label,
+                value: formatStatistic(joined.recordByCode.get(code), definition),
+              })
+            }
             return {
               title: feature.properties.N03_005 || '行政区',
-              properties: [
-                { label: '都道府県', value: feature.properties.N03_001 || '—' },
-                { label: '市', value: feature.properties.N03_004 || '—' },
-                { label: '区', value: feature.properties.N03_005 || '—' },
-                { label: '地域コード', value: code },
-                { label: definition.label, value: formatStatistic(joined.recordByCode.get(code), definition) },
-              ],
+              properties,
             }
           },
         })
@@ -467,7 +491,7 @@ map.once('load', () => {
           legend.setVisible(hasStatistics)
           chartToggle.setVisible(wardsVisible)
           if (hasStatistics) {
-            selectedStatistic = wardsVisible ? DEFAULT_STATISTIC : statisticKeys[0]
+            selectedStatistic = NO_STATISTIC_KEY
             statisticSelector.setOptions(definitions, selectedStatistic)
             updateStatistic(selectedStatistic)
           }

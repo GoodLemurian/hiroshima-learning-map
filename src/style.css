@@ -143,7 +143,7 @@ body,
 .base-map-selector {
   position: absolute;
   inset: 70px auto auto 12px;
-  width: min(300px, calc(100vw - 24px));
+  width: min(312px, calc(100vw - 24px));
   max-height: calc(100% - 82px);
   margin: 0;
   padding: 12px;

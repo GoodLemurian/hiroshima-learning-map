@@ -5,4 +5,6 @@ export function createAdministrativeAreaToggle(onChange) {
       if (toggle.checked) onChange(toggle.value)
     })
   })
+  const selectedToggle = [...toggles].find((toggle) => toggle.checked)
+  if (selectedToggle) onChange(selectedToggle.value)
 }
