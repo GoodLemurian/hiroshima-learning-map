@@ -7,6 +7,9 @@ const TERRAIN_SOURCE_ID = 'gsj-elevation'
 const ELEVATION_COLOR_SOURCE_ID = 'gsj-elevation-colors'
 const ELEVATION_COLOR_LAYER_ID = 'gsj-elevation-colors-layer'
 const ELEVATION_TILE = 'tiles.gsj.jp/tiles/elev2/mixed/{z}/{x}/{y}.webp'
+const CURRENT_LAND_USE_ID = 'land-use-current'
+const CURRENT_LAND_USE_SOURCE_ID = 'current-land-use'
+const CURRENT_LAND_USE_LAYER_ID = 'current-land-use-fill'
 
 registerGsjTerrainProtocol(maplibregl)
 registerElevationColorProtocol(maplibregl)
@@ -71,6 +74,12 @@ export const BASE_MAPS = [
     category: '写真',
     tiles: [`https://cyberjapandata.gsi.go.jp/xyz/${tile}/{z}/{x}/{y}.${tile === 'ort_old10' ? 'png' : 'jpg'}`],
   })),
+  {
+    id: CURRENT_LAND_USE_ID,
+    label: '現在の土地利用',
+    category: '土地利用',
+    tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
+  },
   ...[
     ['land-use-1970', '1970年ごろの土地利用', 'landuseclassification2'],
     ['land-use-1890', '1890年ごろの土地利用', 'landuseclassification1'],
@@ -154,6 +163,47 @@ const baseMapStyle = {
 
 let elevationColorRevision = 0
 
+function ensureCurrentLandUseLayer(map) {
+  if (!map.getSource(CURRENT_LAND_USE_SOURCE_ID)) {
+    map.addSource(CURRENT_LAND_USE_SOURCE_ID, {
+      type: 'geojson',
+      data: '/data/L03-b-21_5132.geojson',
+      attribution: '国土交通省 国土数値情報（土地利用細分メッシュ）',
+    })
+  }
+
+  if (!map.getLayer(CURRENT_LAND_USE_LAYER_ID)) {
+    map.addLayer({
+      id: CURRENT_LAND_USE_LAYER_ID,
+      type: 'fill',
+      source: CURRENT_LAND_USE_SOURCE_ID,
+      layout: { visibility: 'visible' },
+      paint: {
+        'fill-color': [
+          'match',
+          ['get', '土地利用種別'],
+          '0100', '#f7e59c',
+          '0200', '#f4b183',
+          '0500', '#70ad47',
+          '0600', '#c9c9c9',
+          '0700', '#d96b6b',
+          '0901', '#7f7f7f',
+          '0902', '#7f7f7f',
+          '1000', '#b4a7d6',
+          '1100', '#5b9bd5',
+          '1400', '#ffe699',
+          '1500', '#9dc3e6',
+          '1600', '#548235',
+          '#bfbfbf',
+        ],
+        'fill-opacity': 0.68,
+      },
+    })
+  }
+
+  map.setLayoutProperty(CURRENT_LAND_USE_LAYER_ID, 'visibility', 'visible')
+}
+
 export function setElevationColors(map, { enabled, opacity, stops, refresh = true }) {
   setElevationColorStops(stops)
   map.setLayoutProperty(ELEVATION_COLOR_LAYER_ID, 'visibility', enabled ? 'visible' : 'none')
@@ -188,6 +238,12 @@ export function setBaseMap(map, selectedId) {
       )
     })
   })
+
+  if (selectedId === CURRENT_LAND_USE_ID) {
+    ensureCurrentLandUseLayer(map)
+  } else if (map.getLayer(CURRENT_LAND_USE_LAYER_ID)) {
+    map.setLayoutProperty(CURRENT_LAND_USE_LAYER_ID, 'visibility', 'none')
+  }
 }
 
 export function createHiroshimaMap({ container, onError, navigationPosition = 'top-right' }) {
