@@ -19,7 +19,7 @@ export const BASE_MAPS = [
     id: 'standard',
     label: '現在の地図',
     category: '地図',
-    tiles: ['https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png'],
+    tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
   },
   {
     id: 'map-1990s',
