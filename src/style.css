@@ -502,6 +502,10 @@ body,
   display: none !important;
 }
 
+#map[data-drawing-mode='point'] .maplibregl-canvas {
+  cursor: crosshair !important;
+}
+
 .map-action-buttons {
   position: absolute;
   inset: 12px 12px auto auto;

@@ -91,7 +91,7 @@ export function bindFireStationJurisdictionInteractions({ map, isEnabled = () =>
 
   map.on('mouseleave', FIRE_STATION_JURISDICTION_FILL_LAYER_ID, () => {
     clearHover()
-    map.getCanvas().style.cursor = ''
+    if (isEnabled()) map.getCanvas().style.cursor = ''
   })
 
   map.on('click', FIRE_STATION_JURISDICTION_FILL_LAYER_ID, (event) => {

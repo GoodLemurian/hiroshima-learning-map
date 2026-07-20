@@ -101,7 +101,7 @@ export function bindAdministrativeAreaInteractions({ map, isDrawingActive, onSel
   })
   map.on('mouseleave', WARD_FILL_LAYER_ID, () => {
     hoveredWardCode = null
-    map.getCanvas().style.cursor = ''
+    if (!isDrawingActive()) map.getCanvas().style.cursor = ''
     updateHighlight()
   })
   map.on('click', WARD_FILL_LAYER_ID, (event) => {

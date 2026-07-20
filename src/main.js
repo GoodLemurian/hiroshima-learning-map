@@ -87,7 +87,7 @@ document.querySelector('#app').innerHTML = `
         <button type="button" data-action="mode" data-mode="linestring" aria-pressed="false" title="地図を何回かおして、道をかきます"><span aria-hidden="true">／</span>道をかく</button>
         <button type="button" data-action="mode" data-mode="polygon" aria-pressed="false" title="地図を何回かおして、場所をかこみます"><span aria-hidden="true">△</span>場所をかこむ</button>
         <button type="button" data-action="mode" data-mode="select" aria-pressed="true" title="かいたものをえらんで、動かしたり形を直したりします"><span aria-hidden="true">☝</span>えらんで直す</button>
-        <button type="button" class="drawing-button--danger" data-action="delete" title="えらんだものをけします"><span aria-hidden="true">×</span>けす</button>
+        <button type="button" class="drawing-button--danger" data-action="delete" title="えらんだものをけします" disabled><span aria-hidden="true">×</span>けす</button>
         <button type="button" class="drawing-button--danger" data-action="clear" title="かいたものを全部けします" disabled><span aria-hidden="true">⌫</span>全部けす</button>
       </div>
       <p id="drawing-count" class="drawing-count" aria-live="polite">かいたもの：0こ</p>
@@ -238,6 +238,7 @@ map.once('load', () => {
   const chartToggle = createChartToggle()
 
   const drawingState = createDrawingState()
+  const isDrawingPanelOpen = () => drawingState.getState().panelOpen
   const legend = createChoroplethLegend()
   const numericColumns = Object.keys(statisticDefinitions)
   Promise.all([
@@ -282,7 +283,7 @@ map.once('load', () => {
         updateStatistic(selectedStatistic)
         const wardInteractions = bindAdministrativeAreaInteractions({
           map,
-          isDrawingActive: () => drawingState.getState().mode !== 'select',
+          isDrawingActive: isDrawingPanelOpen,
           onSelect: (ward) => {
             chart.setSelection(ward?.wardCode || null)
             if (ward) wardPanelToggle.open()
@@ -297,7 +298,7 @@ map.once('load', () => {
         const wardPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: WARD_FILL_LAYER_ID,
-          isEnabled: () => drawingState.getState().mode === 'select',
+          isEnabled: () => !isDrawingPanelOpen(),
           describeFeature: (feature) => {
             const code = feature?.properties?.N03_007
             const definition = { ...statisticDefinitions[selectedStatistic], key: selectedStatistic }
@@ -318,7 +319,7 @@ map.once('load', () => {
           map,
           layerId: SCHOOL_DISTRICT_FILL_LAYER_ID,
           sourceId: SCHOOL_DISTRICT_SOURCE_ID,
-          isEnabled: () => drawingState.getState().mode === 'select',
+          isEnabled: () => !isDrawingPanelOpen(),
           describeFeature: (feature) => {
             const properties = Object.entries(feature?.properties || {})
               .filter(([, value]) => value !== null && value !== '')
@@ -329,7 +330,7 @@ map.once('load', () => {
         const fireStationPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: FIRE_STATION_LAYER_ID,
-          isEnabled: () => drawingState.getState().mode === 'select',
+          isEnabled: () => !isDrawingPanelOpen(),
           describeFeature: (feature) => {
             const properties = Object.entries(feature?.properties || {})
               .filter(([, value]) => value !== null && value !== '')
@@ -341,7 +342,7 @@ map.once('load', () => {
         })
         const fireStationJurisdictionInteractions = bindFireStationJurisdictionInteractions({
           map,
-          isEnabled: () => drawingState.getState().mode === 'select',
+          isEnabled: () => !isDrawingPanelOpen(),
         })
         createAdministrativeAreaToggle((nextLayer) => {
           const wardsVisible = nextLayer === 'wards'
@@ -404,6 +405,7 @@ map.once('load', () => {
       drawing.setMode(mode)
     },
     onDelete: drawing.deleteSelected,
+    onVisibilityChange: drawing.setPanelOpen,
     onClear: () => {
       if (
         drawingState.getState().count > 0 &&

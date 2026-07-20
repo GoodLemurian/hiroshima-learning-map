@@ -5,15 +5,15 @@ const INITIAL_TEXT = '図形をえらぶと、長さや広さが分かります'
 export function createMeasurementPanel(state) {
   const result = document.querySelector('#measurement-result')
 
-  return state.subscribe(({ features, selectedFeatureId }) => {
-    if (selectedFeatureId === null) {
+  return state.subscribe(({ features, measurementFeatureId }) => {
+    if (measurementFeatureId === null) {
       result.textContent = INITIAL_TEXT
       result.classList.remove('has-measurement')
       return
     }
 
     const selectedFeature = features.find(
-      (feature) => feature.id === selectedFeatureId,
+      (feature) => feature.id === measurementFeatureId,
     )
 
     if (!selectedFeature) {

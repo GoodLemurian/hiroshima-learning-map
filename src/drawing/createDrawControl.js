@@ -2,6 +2,13 @@ import { MaplibreTerradrawControl } from '@watergis/maplibre-gl-terradraw'
 import '@watergis/maplibre-gl-terradraw/dist/maplibre-gl-terradraw.css'
 
 const DRAW_MODES = new Set(['point', 'linestring', 'polygon', 'select'])
+const DRAW_LAYER_IDS = [
+  'school-draw-polygon',
+  'school-draw-polygon-outline',
+  'school-draw-linestring',
+  'school-draw-point',
+  'school-draw-point-marker',
+]
 
 export function createDrawControl({ map, state, onMessage }) {
   const control = new MaplibreTerradrawControl({
@@ -23,6 +30,39 @@ export function createDrawControl({ map, state, onMessage }) {
     onMessage('お絵かきの道具を読みこめませんでした。', true)
     return null
   }
+
+  try {
+    if (!terraDraw.enabled) control.activate()
+  } catch (error) {
+    console.error('Terra Drawを開始できませんでした。', error)
+    onMessage('お絵かきの道具を開始できませんでした。', true)
+    return null
+  }
+
+  let frontFrame = null
+  const bringDrawLayersToFront = () => {
+    frontFrame = null
+    const styleLayers = map.getStyle()?.layers ?? []
+    const existingDrawLayers = DRAW_LAYER_IDS.filter((id) => map.getLayer(id))
+    if (existingDrawLayers.length === 0) return
+
+    const currentTopLayers = styleLayers
+      .slice(-existingDrawLayers.length)
+      .map(({ id }) => id)
+    const alreadyOnTop = existingDrawLayers.every(
+      (id, index) => currentTopLayers[index] === id,
+    )
+    if (alreadyOnTop) return
+
+    existingDrawLayers.forEach((id) => map.moveLayer(id))
+  }
+  const scheduleDrawLayersToFront = () => {
+    if (frontFrame !== null) return
+    frontFrame = window.requestAnimationFrame(bringDrawLayersToFront)
+  }
+
+  map.on('styledata', scheduleDrawLayersToFront)
+  scheduleDrawLayersToFront()
 
   const builtInButton = map
     .getContainer()
@@ -67,14 +107,9 @@ export function createDrawControl({ map, state, onMessage }) {
       syncFeatures()
       if (id === null || id === undefined) return
 
-      setMode('select')
-      try {
-        terraDraw.selectFeature(id)
-        state.setSelectedFeature(id)
-      } catch (error) {
-        console.warn('作図した図形を自動選択できませんでした。', error)
-        state.setSelectedFeature(id)
-      }
+      // Keep the active drawing mode so children can place multiple features
+      // of the same kind. The ID is retained only as the measurement target.
+      state.setMeasurementFeature(id)
     }),
   )
   terraDraw.on('change', safeEvent(syncFeatures))
@@ -89,7 +124,9 @@ export function createDrawControl({ map, state, onMessage }) {
     }
 
     try {
+      if (!terraDraw.enabled) control.activate()
       terraDraw.setMode(mode)
+      map.getContainer().dataset.drawingMode = mode
       state.setMode(mode)
       if (mode !== 'select') state.resetSelection()
       return true
@@ -134,11 +171,39 @@ export function createDrawControl({ map, state, onMessage }) {
     }
   }
 
+  const setPanelOpen = (isOpen) => {
+    try {
+      if (!terraDraw.enabled) control.activate()
+      if (isOpen) {
+        const modeChanged = setMode(state.getState().mode)
+        if (modeChanged) state.setPanelOpen(true)
+        return modeChanged
+      }
+
+      terraDraw.setMode('default')
+      map.getContainer().dataset.drawingMode = 'default'
+      state.resetSelection()
+      state.setPanelOpen(false)
+      return true
+    } catch (error) {
+      console.error('作図パネルの操作状態を変更できませんでした。', error)
+      onMessage('お絵かきの道具を切りかえられませんでした。', true)
+      return false
+    }
+  }
+
   // The current base-map UI only changes raster visibility, so Terra Draw layers
   // survive base-map changes. If a future feature calls setStyle(), recreate this
   // control after style.load so its sources and layers are registered again.
-  setMode('select')
+  terraDraw.setMode('default')
+  map.getContainer().dataset.drawingMode = 'default'
   syncFeatures()
 
-  return { setMode, deleteSelected, clearAll, getDrawnFeatureCollection }
+  return {
+    setMode,
+    setPanelOpen,
+    deleteSelected,
+    clearAll,
+    getDrawnFeatureCollection,
+  }
 }

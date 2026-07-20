@@ -2,6 +2,8 @@ const INITIAL_STATE = {
   mode: 'select',
   features: [],
   selectedFeatureId: null,
+  measurementFeatureId: null,
+  panelOpen: false,
 }
 
 export function createDrawingState() {
@@ -30,11 +32,28 @@ export function createDrawingState() {
       notify()
     },
     setSelectedFeature(id) {
-      state = { ...state, selectedFeatureId: id ?? null }
+      const featureId = id ?? null
+      state = {
+        ...state,
+        selectedFeatureId: featureId,
+        measurementFeatureId: featureId,
+      }
+      notify()
+    },
+    setMeasurementFeature(id) {
+      state = { ...state, measurementFeatureId: id ?? null }
+      notify()
+    },
+    setPanelOpen(panelOpen) {
+      state = { ...state, panelOpen }
       notify()
     },
     resetSelection() {
-      state = { ...state, selectedFeatureId: null }
+      state = {
+        ...state,
+        selectedFeatureId: null,
+        measurementFeatureId: null,
+      }
       notify()
     },
     subscribe(listener) {

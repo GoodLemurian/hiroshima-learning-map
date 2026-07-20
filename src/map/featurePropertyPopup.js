@@ -63,7 +63,7 @@ export function bindFeaturePropertyPopup({
       .addTo(map)
   })
   map.on('mouseleave', layerId, () => {
-    map.getCanvas().style.cursor = ''
+    if (isEnabled()) map.getCanvas().style.cursor = ''
     clearHover()
   })
 

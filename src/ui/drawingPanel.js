@@ -6,18 +6,27 @@ const MODE_HELP = {
 }
 const PANEL_OPEN_EVENT = 'map-panel-open'
 
-export function createDrawingPanel({ state, onMode, onDelete, onClear }) {
+export function createDrawingPanel({
+  state,
+  onMode,
+  onDelete,
+  onClear,
+  onVisibilityChange,
+}) {
   const panel = document.querySelector('#drawing-panel')
   const toggle = document.querySelector('#drawing-panel-toggle')
   const toggleLabel = toggle.querySelector('.drawing-panel-toggle__label')
   const status = document.querySelector('#drawing-status')
   const count = document.querySelector('#drawing-count')
+  const deleteButton = panel.querySelector('[data-action="delete"]')
 
   const setOpen = (willOpen) => {
+    const wasOpen = !panel.hidden
     panel.hidden = !willOpen
     toggle.setAttribute('aria-expanded', String(willOpen))
     toggle.classList.toggle('is-active', willOpen)
     toggleLabel.textContent = willOpen ? 'とじる' : '地図にかく'
+    if (wasOpen !== willOpen) onVisibilityChange(willOpen)
   }
 
   toggle.addEventListener('click', () => {
@@ -50,6 +59,7 @@ export function createDrawingPanel({ state, onMode, onDelete, onClear }) {
       button.setAttribute('aria-pressed', String(active))
     })
     count.textContent = `かいたもの：${featureCount}こ`
+    deleteButton.disabled = mode !== 'select' || featureCount === 0
     document.querySelector('[data-action="clear"]').disabled = featureCount === 0
     status.textContent = selectedFeatureId
       ? 'えらびました。動かして直すか、「けす」をおせます。'
