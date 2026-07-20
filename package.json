@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "generate:school-locations": "node scripts/generate-school-locations.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

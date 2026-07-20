@@ -11,8 +11,11 @@ import { loadWardStatistics } from './data/loadWardStatistics.js'
 import { joinWardStatistics } from './data/joinWardStatistics.js'
 import { DEFAULT_STATISTIC, statisticDefinitions } from './data/statisticDefinitions.js'
 import { findNumericPropertyDefinitions, loadSchoolDistricts } from './data/loadSchoolDistricts.js'
+import { loadSchoolLocations } from './data/loadSchoolLocations.js'
 import { loadFireStations } from './data/loadFireStations.js'
 import { loadFireStationJurisdictions } from './data/loadFireStationJurisdictions.js'
+import { loadPoliceStations } from './data/loadPoliceStations.js'
+import { loadPoliceStationJurisdictions } from './data/loadPoliceStationJurisdictions.js'
 import { createChoroplethScale } from './analysis/createChoroplethScale.js'
 import {
   addAdministrativeAreaLayers,
@@ -22,6 +25,7 @@ import {
   WARD_FILL_LAYER_ID,
 } from './map/administrativeAreaLayers.js'
 import { addSchoolDistrictLayers, SCHOOL_DISTRICT_FILL_LAYER_ID, SCHOOL_DISTRICT_SOURCE_ID, setSchoolDistrictColors, setSchoolDistrictVisibility } from './map/schoolDistrictLayers.js'
+import { addSchoolLocationLayers, SCHOOL_LOCATION_LAYER_ID, setSchoolLocationVisibility } from './map/schoolLocationLayers.js'
 import { addFireStationLayers, FIRE_STATION_LAYER_ID, setFireStationVisibility } from './map/fireStationLayers.js'
 import {
   addFireStationJurisdictionLayers,
@@ -29,6 +33,13 @@ import {
   setFireStationJurisdictionVisibility,
 } from './map/fireStationJurisdictionLayers.js'
 import { bindFeaturePropertyPopup } from './map/featurePropertyPopup.js'
+import {
+  addPoliceStationLayers,
+  POLICE_JURISDICTION_FILL_LAYER_ID,
+  POLICE_JURISDICTION_SOURCE_ID,
+  POLICE_STATION_LAYER_ID,
+  setPoliceStationVisibility,
+} from './map/policeStationLayers.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
@@ -162,6 +173,10 @@ document.querySelector('#app').innerHTML = `
         <span>消防署所を表示</span>
       </label>
       <label class="ward-toggle">
+        <input name="geojson-layer" value="police-stations" type="radio" />
+        <span>警察署・交番を表示</span>
+      </label>
+      <label class="ward-toggle">
         <input name="geojson-layer" value="none" type="radio" />
         <span>なし</span>
       </label>
@@ -245,10 +260,13 @@ map.once('load', () => {
     loadAdministrativeAreas(),
     loadWardStatistics({ numericColumns }),
     loadSchoolDistricts(),
+    loadSchoolLocations(),
     loadFireStations(),
     loadFireStationJurisdictions(),
+    loadPoliceStations(),
+    loadPoliceStationJurisdictions(),
   ])
-    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, fireStations, fireStationJurisdictions]) => {
+    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, schoolLocations, fireStations, fireStationJurisdictions, policeStations, policeStationJurisdictions]) => {
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
@@ -256,8 +274,10 @@ map.once('load', () => {
         }
         addAdministrativeAreaLayers(map, joined.featureCollection)
         addSchoolDistrictLayers(map, schoolDistricts)
+        addSchoolLocationLayers(map, schoolLocations)
         addFireStationJurisdictionLayers(map, fireStationJurisdictions)
         addFireStationLayers(map, fireStations)
+        addPoliceStationLayers(map, policeStations, policeStationJurisdictions)
         const schoolDefinitions = findNumericPropertyDefinitions(schoolDistricts)
         let activeLayer = 'wards'
         let selectedStatistic = DEFAULT_STATISTIC
@@ -327,6 +347,19 @@ map.once('load', () => {
             return properties.length ? { title: '小学校区の属性', properties } : null
           },
         })
+        const schoolLocationPropertyPopup = bindFeaturePropertyPopup({
+          map,
+          layerId: SCHOOL_LOCATION_LAYER_ID,
+          isEnabled: () => !isDrawingPanelOpen(),
+          describeFeature: (feature) => {
+            const properties = Object.entries(feature?.properties || {})
+              .filter(([, value]) => value !== null && value !== '')
+              .map(([label, value]) => ({ label, value: String(value) }))
+            return properties.length
+              ? { title: feature.properties?.['名称'] || '学校', properties }
+              : null
+          },
+        })
         const fireStationPropertyPopup = bindFeaturePropertyPopup({
           map,
           layerId: FIRE_STATION_LAYER_ID,
@@ -344,24 +377,61 @@ map.once('load', () => {
           map,
           isEnabled: () => !isDrawingPanelOpen(),
         })
+        const policeStationPropertyPopup = bindFeaturePropertyPopup({
+          map,
+          layerId: POLICE_STATION_LAYER_ID,
+          isEnabled: () => !isDrawingPanelOpen(),
+          describeFeature: (feature) => {
+            const properties = Object.entries(feature?.properties || {})
+              .filter(([, value]) => value !== null && value !== '')
+              .map(([label, value]) => ({ label, value: String(value) }))
+            return properties.length
+              ? { title: feature.properties?.P18_001 || '警察署・交番', properties }
+              : null
+          },
+        })
+        const policeJurisdictionPropertyPopup = bindFeaturePropertyPopup({
+          map,
+          layerId: POLICE_JURISDICTION_FILL_LAYER_ID,
+          sourceId: POLICE_JURISDICTION_SOURCE_ID,
+          isEnabled: () => !isDrawingPanelOpen(),
+          describeFeature: (feature) => {
+            const properties = Object.entries(feature?.properties || {})
+              .filter(([, value]) => value !== null && value !== '')
+              .map(([label, value]) => ({ label, value: String(value) }))
+            return properties.length
+              ? { title: feature.properties?.P18_005 || '警察署管轄区域', properties }
+              : null
+          },
+        })
         createAdministrativeAreaToggle((nextLayer) => {
           const wardsVisible = nextLayer === 'wards'
           const schoolsVisible = nextLayer === 'school-districts'
           const fireStationsVisible = nextLayer === 'fire-stations'
+          const policeStationsVisible = nextLayer === 'police-stations'
           const definitions = wardsVisible ? statisticDefinitions : schoolsVisible ? schoolDefinitions : {}
           const statisticKeys = Object.keys(definitions)
           const hasStatistics = statisticKeys.length > 0
           activeLayer = nextLayer
           if (!wardsVisible) wardPropertyPopup.remove()
-          if (!schoolsVisible) schoolPropertyPopup.remove()
+          if (!schoolsVisible) {
+            schoolPropertyPopup.remove()
+            schoolLocationPropertyPopup.remove()
+          }
           if (!fireStationsVisible) {
             fireStationPropertyPopup.remove()
             fireStationJurisdictionInteractions.remove()
           }
+          if (!policeStationsVisible) {
+            policeStationPropertyPopup.remove()
+            policeJurisdictionPropertyPopup.remove()
+          }
           wardInteractions.setVisible(wardsVisible)
           setSchoolDistrictVisibility(map, schoolsVisible)
+          setSchoolLocationVisibility(map, schoolsVisible)
           setFireStationJurisdictionVisibility(map, fireStationsVisible)
           setFireStationVisibility(map, fireStationsVisible)
+          setPoliceStationVisibility(map, policeStationsVisible)
           document.querySelector('.statistic-control').hidden = !hasStatistics
           legend.setVisible(hasStatistics)
           chartToggle.setVisible(wardsVisible)
