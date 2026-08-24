@@ -1,0 +1,9 @@
+﻿ward_code,ward_name,population,children_population,working_age_population,elderly_population,children_rate,working_age_rate,elderly_rate,reference_date,source_dataset,source_url,license
+34101,中区,137001,13851,88212,34938,10.1,64.4,25.5,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
+34102,東区,116080,14174,69581,32325,12.2,59.9,27.8,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
+34103,南区,140242,16969,87518,35755,12.1,62.4,25.5,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
+34104,西区,184415,21026,117252,46137,11.4,63.6,25.0,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
+34105,安佐南区,241033,33611,153483,53939,13.9,63.7,22.4,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
+34106,安佐北区,134350,13505,72218,48627,10.1,53.8,36.2,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
+34107,安芸区,74004,8060,45024,20920,10.9,60.8,28.3,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
+34108,佐伯区,138065,18340,79883,39842,13.3,57.9,28.9,2026-05-31,広島市 年齢別人口（区役所別）,https://www.city.hiroshima.lg.jp/shisei/toukei/1027844/1027845/1027846/1038153/index.html,CC BY 2.1 JP
