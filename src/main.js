@@ -17,6 +17,8 @@ import { loadFireStations } from './data/loadFireStations.js'
 import { loadFireStationJurisdictions } from './data/loadFireStationJurisdictions.js'
 import { loadPoliceStations } from './data/loadPoliceStations.js'
 import { loadPoliceStationJurisdictions } from './data/loadPoliceStationJurisdictions.js'
+import { loadTrafficAccidents } from './data/loadTrafficAccidents.js'
+import { reverseGeocode } from './data/reverseGeocode.js'
 import { createChoroplethScale } from './analysis/createChoroplethScale.js'
 import {
   addAdministrativeAreaLayers,
@@ -45,6 +47,11 @@ import {
   POLICE_STATION_LAYER_ID,
   setPoliceStationVisibility,
 } from './map/policeStationLayers.js'
+import {
+  addTrafficAccidentLayers,
+  setTrafficAccidentVisibility,
+  TRAFFIC_ACCIDENT_LAYER_ID,
+} from './map/trafficAccidentLayers.js'
 import { createAdministrativeAreaToggle } from './ui/administrativeAreaToggle.js'
 import { createStatisticSelector, NO_STATISTIC_KEY } from './ui/statisticSelector.js'
 import { createChoroplethLegend } from './ui/choroplethLegend.js'
@@ -203,6 +210,10 @@ document.querySelector('#app').innerHTML = `
         <input name="geojson-layer" value="police-stations" type="radio" />
         <span>けいさつ署・交番を表示</span>
       </label>
+      <label class="ward-toggle">
+        <input name="geojson-layer" value="traffic-accidents" type="radio" />
+        <span>交通事故発生場所を表示</span>
+      </label>
       <label class="statistic-control" for="statistic-selector" hidden>
         <span>色分けするもの</span>
         <select id="statistic-selector"></select>
@@ -300,8 +311,9 @@ map.once('load', () => {
     loadFireStationJurisdictions(),
     loadPoliceStations(),
     loadPoliceStationJurisdictions(),
+    loadTrafficAccidents(),
   ])
-    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, schoolLocations, fireStations, fireStationJurisdictions, policeStations, policeStationJurisdictions]) => {
+    .then(([{ featureCollection, wardCodes }, { records }, schoolDistricts, schoolLocations, fireStations, fireStationJurisdictions, policeStations, policeStationJurisdictions, trafficAccidents]) => {
       try {
         const joined = joinWardStatistics(featureCollection, records, statisticDefinitions)
         if (wardCodes.some((code) => !joined.recordByCode.has(code))) {
@@ -313,6 +325,7 @@ map.once('load', () => {
         addFireStationJurisdictionLayers(map, fireStationJurisdictions)
         addFireStationLayers(map, fireStations)
         addPoliceStationLayers(map, policeStations, policeStationJurisdictions)
+        addTrafficAccidentLayers(map, trafficAccidents)
         const schoolDefinitions = findNumericPropertyDefinitions(schoolDistricts)
         let activeLayer = 'none'
         let selectedStatistic = NO_STATISTIC_KEY
@@ -446,11 +459,50 @@ map.once('load', () => {
           getPointName: (feature) => feature?.properties?.P18_005 || feature?.properties?.P18_001,
           isEnabled: () => !isDrawingPanelOpen(),
         })
+        const trafficAccidentPropertyPopup = bindFeaturePropertyPopup({
+          map,
+          layerId: TRAFFIC_ACCIDENT_LAYER_ID,
+          isEnabled: () => !isDrawingPanelOpen(),
+          describeFeature: async (feature) => {
+            const properties = feature?.properties
+            const coordinates = feature?.geometry?.coordinates
+            if (!properties || !Array.isArray(coordinates)) return null
+            const dateParts = [
+              properties['発生日時　　年'],
+              properties['発生日時　　月'],
+              properties['発生日時　　日'],
+              properties['発生日時　　時'],
+              properties['発生日時　　分'],
+            ]
+            if (dateParts.some((part) => part === null || part === undefined || part === '')) return null
+            const [yearValue, ...timeValues] = dateParts
+            const year = String(yearValue).padStart(4, '0')
+            const [month, day, hour, minute] = timeValues.map((part) => String(part).padStart(2, '0'))
+            let address = '住所を取得できませんでした'
+            try {
+              const result = await reverseGeocode(coordinates[0], coordinates[1])
+              const wardFeature = joined.featureCollection.features.find(
+                (ward) => ward.properties?.N03_007 === result.muniCd,
+              )
+              const municipality = wardFeature
+                ? `${wardFeature.properties.N03_001 || ''}${wardFeature.properties.N03_004 || ''}${wardFeature.properties.N03_005 || ''}`
+                : ''
+              address = `${municipality}${result.lv01Nm || ''}` || address
+            } catch (error) {
+              console.error('交通事故発生場所の住所を取得できませんでした。', error)
+            }
+            return {
+              title: address,
+              properties: [{ label: '発生日時', value: `${year}-${month}-${day} ${hour}:${minute}` }],
+            }
+          },
+        })
         createAdministrativeAreaToggle((nextLayer) => {
           const wardsVisible = nextLayer === 'wards'
           const schoolsVisible = nextLayer === 'school-districts'
           const fireStationsVisible = nextLayer === 'fire-stations'
           const policeStationsVisible = nextLayer === 'police-stations'
+          const trafficAccidentsVisible = nextLayer === 'traffic-accidents'
           const definitions = wardsVisible ? statisticDefinitions : schoolsVisible ? schoolDefinitions : {}
           const statisticKeys = Object.keys(definitions)
           const hasStatistics = statisticKeys.length > 0
@@ -468,12 +520,14 @@ map.once('load', () => {
             policeStationPropertyPopup.remove()
             policeJurisdictionHover.remove()
           }
+          if (!trafficAccidentsVisible) trafficAccidentPropertyPopup.remove()
           wardInteractions.setVisible(wardsVisible)
           setSchoolDistrictVisibility(map, schoolsVisible)
           setSchoolLocationVisibility(map, schoolsVisible)
           setFireStationJurisdictionVisibility(map, fireStationsVisible)
           setFireStationVisibility(map, fireStationsVisible)
           setPoliceStationVisibility(map, policeStationsVisible)
+          setTrafficAccidentVisibility(map, trafficAccidentsVisible)
           document.querySelector('.statistic-control').hidden = !hasStatistics
           legend.setVisible(hasStatistics)
           chartToggle.setVisible(wardsVisible)

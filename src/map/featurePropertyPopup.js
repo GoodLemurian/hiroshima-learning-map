@@ -3,8 +3,6 @@ import maplibregl from 'maplibre-gl'
 function createPopupContent(title, properties) {
   const container = document.createElement('div')
   container.className = 'feature-properties'
-  const heading = document.createElement('strong')
-  heading.textContent = title
   const list = document.createElement('dl')
   properties.forEach(({ label, value }) => {
     const term = document.createElement('dt')
@@ -13,7 +11,12 @@ function createPopupContent(title, properties) {
     description.textContent = value
     list.append(term, description)
   })
-  container.append(heading, list)
+  if (title) {
+    const heading = document.createElement('strong')
+    heading.textContent = title
+    container.append(heading)
+  }
+  container.append(list)
   return container
 }
 
@@ -45,10 +48,13 @@ export function bindFeaturePropertyPopup({
       map.setFeatureState({ source: sourceId, id: hoveredFeatureId }, { hover: true })
     }
   })
-  map.on('click', layerId, (event) => {
+  let requestId = 0
+  map.on('click', layerId, async (event) => {
     if (!isEnabled()) return
+    const currentRequestId = ++requestId
     const feature = event.features?.[0]
-    const description = describeFeature(feature)
+    const description = await describeFeature(feature)
+    if (currentRequestId !== requestId || !isEnabled()) return
     if (!description) return
     if (sourceId && feature?.id !== undefined) {
       if (selectedFeatureId !== null) {
@@ -69,6 +75,7 @@ export function bindFeaturePropertyPopup({
 
   return {
     remove: () => {
+      requestId += 1
       clearHover()
       if (sourceId && selectedFeatureId !== null) {
         map.setFeatureState({ source: sourceId, id: selectedFeatureId }, { selected: false })

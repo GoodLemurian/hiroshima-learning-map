@@ -1,4 +1,5 @@
 import maplibregl from 'maplibre-gl'
+import { Protocol } from 'pmtiles'
 import { registerGsjTerrainProtocol } from './terrain-protocol.js'
 import { registerElevationColorProtocol, setElevationColorStops } from './elevation-colors.js'
 
@@ -11,6 +12,8 @@ const CURRENT_LAND_USE_ID = 'land-use-current'
 const CURRENT_LAND_USE_SOURCE_ID = 'current-land-use'
 const CURRENT_LAND_USE_LAYER_ID = 'current-land-use-fill'
 
+const pmtilesProtocol = new Protocol()
+maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile)
 registerGsjTerrainProtocol(maplibregl)
 registerElevationColorProtocol(maplibregl)
 
@@ -166,8 +169,8 @@ let elevationColorRevision = 0
 function ensureCurrentLandUseLayer(map) {
   if (!map.getSource(CURRENT_LAND_USE_SOURCE_ID)) {
     map.addSource(CURRENT_LAND_USE_SOURCE_ID, {
-      type: 'geojson',
-      data: '/data/L03-b-21_5132.geojson',
+      type: 'vector',
+      url: `pmtiles://${window.location.origin}${import.meta.env.BASE_URL}data/L03-b-21_5132.pmtiles`,
       attribution: '国土交通省 国土数値情報（土地利用細分メッシュ）',
     })
   }
@@ -177,6 +180,7 @@ function ensureCurrentLandUseLayer(map) {
       id: CURRENT_LAND_USE_LAYER_ID,
       type: 'fill',
       source: CURRENT_LAND_USE_SOURCE_ID,
+      'source-layer': 'land-use',
       layout: { visibility: 'visible' },
       paint: {
         'fill-color': [

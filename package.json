@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "generate:school-locations": "node scripts/generate-school-locations.mjs",
+    "generate:land-use-pmtiles": "tippecanoe --output=public/data/L03-b-21_5132.pmtiles --layer=land-use --minimum-zoom=10 --maximum-zoom=14 --include='土地利用種別' --include='細分メッシュコード' --include='衛星写真撮影年月日' --force public/data/L03-b-21_5132.geojson",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -16,6 +17,7 @@
     "@turf/turf": "^7.3.5",
     "@watergis/maplibre-gl-terradraw": "^1.14.4",
     "maplibre-gl": "^5.24.0",
+    "pmtiles": "^4.5.0",
     "vega": "^6.2.0",
     "vega-embed": "^7.1.0",
     "vega-lite": "^6.4.3"
